@@ -6,9 +6,6 @@
     <title>GeoAlertAR - Sistema de Detección de Incendios | Sierras Chicas Demo</title>
     
     <meta name="description" content="Sistema de detección temprana de incendios - Sierras Chicas, Córdoba">
-    <meta property="og:title" content="GeoAlertAR - Sierras Chicas">
-    <meta property="og:description" content="Monitoreo satelital de riesgo de incendios en tiempo real">
-    <meta property="og:url" content="https://geoalertar.com.ar">
     <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -18,28 +15,45 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-        .pulse { animation: pulse 2s infinite; transform-origin: center center; }
+        .pulse { animation: pulse 2s infinite; }
         .leaflet-div-icon { background: transparent; border: none; }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        .leaflet-popup-content-wrapper { background: #ffffff; color: #1f2937; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .leaflet-popup-content-wrapper { border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
         .leaflet-popup-tip { background: #ffffff; }
+
+        /* === CAPAS (Z-INDEX) CORREGIDAS PARA FUNCIONALIDAD MÓVIL === */
+        /* El mapa de Leaflet tiene un z-index por defecto de ~400 */
         
-        #report-modal-bg { z-index: 6000; transition: opacity 0.3s ease; }
+        /* Botón de menú: Debe estar por encima del mapa */
+        #mobile-menu-btn {
+            z-index: 1000;
+        }
+        /* Overlay: Aparece sobre el mapa pero debajo del sidebar */
+        #sidebar-overlay {
+            z-index: 1999;
+            transition: opacity 0.3s ease;
+        }
+        /* Sidebar: La capa más alta cuando está abierto */
+        #sidebar {
+            z-index: 2000;
+        }
+        /* Modal de reporte: La capa superior a todo lo demás */
+        #report-modal-bg {
+            z-index: 3000;
+            transition: opacity 0.3s ease;
+        }
         #report-modal-content { transition: transform 0.3s ease; }
-        
-        #sidebar-overlay { transition: opacity 0.3s ease; z-index: 4998; }
 
         @media (max-width: 768px) {
-            .sidebar-mobile { 
+            #sidebar { 
                 transform: translateX(-100%); 
                 transition: transform 0.3s ease;
                 width: 85%;
                 max-width: 320px;
-                z-index: 5000; /* Sidebar por encima del overlay */
             }
-            .sidebar-mobile.open { transform: translateX(0); }
+            #sidebar.open { transform: translateX(0); }
         }
         
         .watermark {
@@ -54,13 +68,13 @@
 
 <body class="bg-gray-100 text-gray-800 flex h-screen overflow-hidden">
 
-    <button id="mobile-menu-btn" class="md:hidden fixed top-4 left-4 bg-white p-2 rounded-lg shadow-lg" style="z-index: 5001;">
+    <button id="mobile-menu-btn" class="md:hidden fixed top-4 left-4 bg-white p-2 rounded-lg shadow-lg">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
     </button>
     
     <div id="sidebar-overlay" class="md:hidden fixed inset-0 bg-black bg-opacity-50 opacity-0 pointer-events-none"></div>
 
-    <aside id="sidebar" class="w-80 bg-white border-r border-gray-200 flex flex-col h-full fixed md:relative sidebar-mobile md:translate-x-0">
+    <aside id="sidebar" class="w-80 bg-white border-r border-gray-200 flex flex-col h-full fixed md:relative md:translate-x-0">
         <button id="close-sidebar" class="md:hidden absolute top-4 right-4 text-gray-500">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
@@ -71,7 +85,7 @@
         </div>
         
         <div class="bg-blue-50 border-l-4 border-blue-500 p-3 mx-4 mt-4 rounded-r">
-            <p class="text-xs text-blue-800"><strong>🔬 Versión Demo:</strong> En evaluación para bomberos de Sierras Chicas. <a href="mailto:geoalertar1@gmail.com" class="underline">Enviar feedback</a></p>
+            <p class="text-xs text-blue-800"><strong>🔬 Versión Demo:</strong> En evaluación para bomberos. <a href="mailto:geoalertar1@gmail.com" class="underline">Enviar feedback</a></p>
         </div>
         
         <div class="p-4 border-b border-gray-200"><div id="status-message" class="text-center text-sm text-gray-500 h-5"></div></div>
@@ -79,7 +93,7 @@
         <div id="search-panel" class="p-4 space-y-2 border-b border-gray-200 hidden">
             <label for="town-select" class="block text-sm font-medium text-gray-600">Buscar Localidad</label>
             <div class="flex space-x-2">
-                <select id="town-select" class="w-full bg-gray-50 border border-gray-300 rounded-md p-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none" disabled><option>Cargando...</option></select>
+                <select id="town-select" class="w-full bg-gray-50 border border-gray-300 rounded-md p-2 text-gray-900 focus:ring-2 focus:ring-blue-500" disabled><option>Cargando...</option></select>
                 <button id="search-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-3 rounded-md" disabled>Ir</button>
             </div>
         </div>
@@ -97,7 +111,7 @@
         <div id="report-modal-content" class="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col transform scale-95 relative">
             <div class="watermark">GEOALERTAR</div>
             <div class="flex justify-between items-center p-4 border-b"><h2 class="text-xl font-bold text-gray-800">📄 Reporte de Riesgo</h2><button id="close-report-btn" class="text-gray-400 hover:text-gray-600 text-3xl">&times;</button></div>
-            <div class="bg-red-50 border-l-4 border-red-500 p-3 mx-4 mt-4 rounded-r"><p class="text-xs text-red-800"><strong>⚠️ CONFIDENCIAL:</strong> Reporte propiedad de Federico Sinato. Prohibida su distribución sin autorización.</p></div>
+            <div class="bg-red-50 border-l-4 border-red-500 p-3 mx-4 mt-4 rounded-r"><p class="text-xs text-red-800"><strong>⚠️ CONFIDENCIAL:</strong> Propiedad de Federico Sinato. Prohibida su distribución.</p></div>
             <div id="report-content" class="p-6 overflow-y-auto text-gray-700 space-y-4 relative z-10"></div>
             <div class="p-4 border-t bg-gray-50 text-xs text-gray-600"><p class="text-center">Reporte por <strong>GeoAlertAR®</strong> | ID: <span id="report-id"></span> | <span id="report-date"></span></p></div>
         </div>
@@ -114,7 +128,6 @@
             townSelect: document.getElementById('town-select'),
             searchBtn: document.getElementById('search-btn'),
             reportModalBg: document.getElementById('report-modal-bg'),
-            reportModalContent: document.getElementById('report-modal-content'),
             reportContent: document.getElementById('report-content'),
             closeReportBtn: document.getElementById('close-report-btn'),
             sidebar: document.getElementById('sidebar'),
@@ -127,10 +140,8 @@
         const closeMobileMenu = () => { ui.sidebar.classList.remove('open'); ui.sidebarOverlay.classList.add('opacity-0', 'pointer-events-none'); };
 
         const initMap = () => {
-            const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
             const hybridLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',{ maxZoom: 20, subdomains:['mt0','mt1','mt2','mt3'], attribution: 'Map data &copy; Google' });
             map = L.map('map', { center: [-31.07, -64.30], zoom: window.innerWidth < 768 ? 10 : 11, layers: [hybridLayer], zoomControl: window.innerWidth > 768 });
-            L.control.layers({ "Híbrido": hybridLayer, "Satélite": satelliteLayer }).addTo(map);
         };
 
         const setupEventListeners = () => {
@@ -159,21 +170,15 @@
         const processCSVData = (csvText) => {
             try {
                 townData = parseCSV(csvText);
-                if (townData.length === 0) throw new Error("CSV vacío o en formato incorrecto.");
-                
                 const geojsonData = convertToGeoJSON(townData);
-                if (geojsonData.features.length === 0) throw new Error("No se generaron puntos. Revise coordenadas.");
-
                 const summary = calculateSummary(townData);
                 renderMapData(geojsonData);
                 updateSidebar(summary);
                 populateTownSelector(townData);
-                
                 ui.statusMsg.textContent = `✅ ${summary.totalPuntos} puntos cargados`;
                 ui.resultsPanel.classList.remove('hidden');
                 ui.searchPanel.classList.remove('hidden');
             } catch (error) {
-                console.error("Error procesando CSV:", error);
                 ui.statusMsg.innerHTML = `<span class="text-red-600 font-bold">❌ ${error.message}</span>`;
             }
         };
@@ -182,19 +187,15 @@
             const lines = text.trim().split(/\r?\n/);
             const headers = lines.shift().split(',').map(h => h.trim());
             return lines.map(line => {
-                if (!line) return null;
                 const values = line.split(',');
-                return headers.reduce((obj, header, index) => {
-                    obj[header] = values[index] ? values[index].trim() : '';
-                    return obj;
-                }, {});
+                return headers.reduce((obj, h, i) => (obj[h] = values[i]?.trim() || '', obj), {});
             }).filter(Boolean);
         };
 
         const convertToGeoJSON = (data) => ({
             type: "FeatureCollection",
             features: data.map(row => {
-                const lat = parseFloat(row.lat); const lon = parseFloat(row.lon);
+                const lat = parseFloat(row.lat), lon = parseFloat(row.lon);
                 if (isNaN(lat) || isNaN(lon)) return null;
                 return {
                     type: "Feature",
@@ -229,7 +230,7 @@
         };
 
         const updateSidebar = (summary) => {
-            ui.statsSummary.innerHTML = `<h3 class="text-lg font-semibold text-gray-900 mb-2">Resumen de Riesgo</h3><div class="bg-gray-50 p-3 rounded-lg text-sm border"><div class="flex justify-between"><span>Puntos Analizados:</span><span class="font-semibold">${summary.totalPuntos}</span></div><hr class="my-2"><div class="flex justify-between text-red-600"><span>🔴 Crítico:</span><span class="font-semibold">${summary.critico}</span></div><div class="flex justify-between text-orange-500"><span>🟠 Alto:</span><span class="font-semibold">${summary.alto}</span></div><div class="flex justify-between text-yellow-500"><span>🟡 Moderado:</span><span class="font-semibold">${summary.moderado}</span></div><div class="flex justify-between text-green-600"><span>🟢 Bajo:</span><span class="font-semibold">${summary.bajo}</span></div></div>`;
+            ui.statsSummary.innerHTML = `<h3 class="text-lg font-semibold text-gray-900 mb-2">Resumen de Riesgo</h3><div class="bg-gray-50 p-3 rounded-lg text-sm border space-y-1"><div class="flex justify-between"><span>Puntos Analizados:</span><span class="font-semibold">${summary.totalPuntos}</span></div><hr class="my-1"><div class="flex justify-between text-red-600"><span>🔴 Crítico:</span><span class="font-semibold">${summary.critico}</span></div><div class="flex justify-between text-orange-500"><span>🟠 Alto:</span><span class="font-semibold">${summary.alto}</span></div><div class="flex justify-between text-yellow-500"><span>🟡 Moderado:</span><span class="font-semibold">${summary.moderado}</span></div><div class="flex justify-between text-green-600"><span>🟢 Bajo:</span><span class="font-semibold">${summary.bajo}</span></div></div>`;
             const riskLevels = [{ id: 'critico', name: 'Crítico' }, { id: 'alto', name: 'Alto' }, { id: 'moderado', name: 'Moderado' }, { id: 'bajo', name: 'Bajo' }];
             ui.layerFilters.innerHTML = `<h3 class="text-lg font-semibold text-gray-900 mb-2 mt-4">Filtros de Capas</h3><div class="space-y-2 text-sm">${riskLevels.map(l => `<label for="filter-${l.id}" class="flex items-center space-x-3 cursor-pointer p-1 rounded-md hover:bg-gray-100"><input type="checkbox" id="filter-${l.id}" data-level="${l.name.toUpperCase()}" checked class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"><span class="font-medium">${l.name}</span></label>`).join('')}<hr class="my-2"><label for="filter-area" class="flex items-center space-x-3 cursor-pointer p-1 rounded-md hover:bg-gray-100"><input type="checkbox" id="filter-area" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"><span class="font-medium text-gray-700">🛰️ Mostrar Área de Análisis</span></label></div>`;
             document.querySelectorAll('#layer-filters input').forEach(cb => cb.addEventListener('change', cb.id === 'filter-area' ? toggleScanArea : handleFilterChange));
@@ -242,9 +243,7 @@
         };
 
         const handleTownSearch = () => {
-            const selectedTown = ui.townSelect.value;
-            if (!selectedTown) return;
-            const target = townData.find(p => p.nombre === selectedTown);
+            const target = townData.find(p => p.nombre === ui.townSelect.value);
             if (target) {
                 map.flyTo([target.lat, target.lon], 14);
                 if (window.innerWidth < 768) closeMobileMenu();
@@ -262,17 +261,17 @@
             return `<div class="${nivel === 'CRÍTICO' ? 'pulse' : ''}" style="width:32px;height:42px;"><svg viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 4px 6px rgba(0,0,0,0.3));"><path d="M16 0C7.16344 0 0 7.16344 0 16C0 28 16 42 16 42C16 42 32 28 32 16C32 7.16344 24.8366 0 16 0Z" fill="${color}"/><circle cx="16" cy="16" r="7" fill="white"/></svg></div>`;
         };
 
-        const createPopupContent = (props) => `<div class="text-gray-800" style="min-width:230px;"><h3 class="font-bold text-lg mb-2 border-b pb-1">${props.nombre.toUpperCase()}</h3><p><strong>Riesgo:</strong> ${props.nivel} (${parseFloat(props.riesgo_final).toFixed(1)}%)</p><hr class="my-2"><button class="w-full mt-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-1 px-2 rounded" onclick='generateReport(${JSON.stringify(props)})'>Generar Reporte</button></div>`;
+        const createPopupContent = (props) => `<div class="text-gray-800" style="min-width:220px;"><h3 class="font-bold text-lg mb-2 border-b pb-1">${props.nombre.toUpperCase()}</h3><p><strong>Riesgo:</strong> ${props.nivel} (${parseFloat(props.riesgo_final).toFixed(1)}%)</p><hr class="my-2"><button class="w-full mt-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-1 px-2 rounded" onclick='generateReport(${JSON.stringify(props)})'>Generar Reporte</button></div>`;
         
         const generateReport = (props) => {
             const id = 'GAR-' + Date.now().toString(36).toUpperCase();
             const date = new Date().toLocaleString('es-AR');
             document.getElementById('report-id').textContent = id; document.getElementById('report-date').textContent = date;
-            ui.reportContent.innerHTML = `<div class="mb-4"><h3 class="text-lg font-bold">Reporte para: <span class="text-blue-600">${props.nombre.toUpperCase()}</span></h3><p class="text-sm text-gray-500">ID: ${id} | Fecha: ${date}</p></div><p>Análisis detallado para ${props.nombre}...</p>`;
+            ui.reportContent.innerHTML = `<div class="mb-4"><h3 class="text-lg font-bold">Reporte para: <span class="text-blue-600">${props.nombre.toUpperCase()}</span></h3><p class="text-sm text-gray-500">ID: ${id} | Fecha: ${date}</p></div><div class="bg-gray-100 p-4 rounded-lg space-y-2"><p><strong>Nivel de Riesgo:</strong> ${props.nivel} (${parseFloat(props.riesgo_final).toFixed(1)}%)</p><p><strong>Población:</strong> ${parseInt(props.poblacion).toLocaleString('es-AR')}</p><p><strong>Datos Crudos:</strong> NDVI(${props.ndvi}), Precip.(${props.precipitacion_60d}mm), Temp.(${props.temperatura}°C), Viento(${props.viento_kmh}km/h)</p></div>`;
             openReportModal();
         };
 
-        const openReportModal = () => { ui.reportModalBg.classList.remove('hidden', 'opacity-0'); ui.reportModalContent.classList.remove('scale-95'); };
+        const openReportModal = () => { ui.reportModalBg.classList.remove('hidden', 'opacity-0'); };
         const closeReportModal = () => { ui.reportModalBg.classList.add('opacity-0'); setTimeout(() => ui.reportModalBg.classList.add('hidden'), 300); };
         
         const handleFilterChange = () => {
