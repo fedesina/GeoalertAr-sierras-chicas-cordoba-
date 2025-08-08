@@ -5,171 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GeoAlertAR - Sistema de Detección de Incendios | Sierras Chicas Demo</title>
     
-    <!-- Meta tags para SEO y social -->
     <meta name="description" content="Sistema de detección temprana de incendios - Sierras Chicas, Córdoba">
     <meta property="og:title" content="GeoAlertAR - Sierras Chicas">
     <meta property="og:description" content="Monitoreo satelital de riesgo de incendios en tiempo real">
     <meta property="og:url" content="https://geoalertar.com.ar">
     <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
     
-    <!-- Librerías -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <!-- Estilos Personalizados -->
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body { 
-            font-family: 'Inter', sans-serif; 
-            overflow: hidden;
-            height: 100vh;
-            width: 100vw;
-        }
-        
-        @keyframes pulse { 
-            0% { transform: scale(1); } 
-            50% { transform: scale(1.1); } 
-            100% { transform: scale(1); } 
-        }
-        
-        .pulse { 
-            animation: pulse 2s infinite; 
-            transform-origin: center center; 
-        }
-        
-        .leaflet-div-icon { 
-            background: transparent; 
-            border: none; 
-        }
-        
-        /* Desktop layout */
-        .main-container {
-            display: flex;
-            height: 100vh;
-            width: 100vw;
-            position: relative;
-        }
-        
-        /* Sidebar desktop */
-        .sidebar {
-            width: 320px;
-            background: white;
-            border-right: 1px solid #e5e7eb;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            position: relative;
-            z-index: 900;
-        }
-        
-        /* Map container */
-        .map-container {
-            flex: 1;
-            height: 100%;
-            position: relative;
-        }
-        
-        #map {
-            width: 100%;
-            height: 100%;
-        }
-        
-        /* Mobile button */
-        .mobile-menu-btn {
-            display: none;
-            position: fixed;
-            top: 15px;
-            left: 15px;
-            z-index: 1001;
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            border: none;
-            cursor: pointer;
-        }
-        
-        /* Mobile styles */
-        @media (max-width: 768px) {
-            .mobile-menu-btn {
-                display: block;
-            }
-            
-            .sidebar {
-                position: fixed;
-                left: -100%;
-                top: 0;
-                height: 100vh;
-                width: 85%;
-                max-width: 320px;
-                z-index: 1000;
-                transition: left 0.3s ease;
-            }
-            
-            .sidebar.open {
-                left: 0;
-            }
-            
-            .map-container {
-                width: 100vw;
-            }
-            
-            .mobile-overlay {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0, 0, 0, 0.5);
-                z-index: 999;
-            }
-            
-            .mobile-overlay.show {
-                display: block;
-            }
-            
-            .leaflet-control-zoom {
-                margin-top: 70px !important;
-            }
-        }
-        
-        /* Scrollbar */
+        body { font-family: 'Inter', sans-serif; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        .pulse { animation: pulse 2s infinite; transform-origin: center center; }
+        .leaflet-div-icon { background: transparent; border: none; }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .leaflet-popup-content-wrapper { background: #ffffff; color: #1f2937; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .leaflet-popup-tip { background: #ffffff; }
+        #report-modal-bg { z-index: 5000; transition: opacity 0.3s ease; }
+        #report-modal-content { transition: transform 0.3s ease; }
         
-        /* Popup */
-        .leaflet-popup-content-wrapper { 
-            background: #ffffff; 
-            color: #1f2937; 
-            border-radius: 8px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+        /* === Mejoras para Móviles === */
+        #sidebar-overlay {
+            transition: opacity 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar-mobile { 
+                transform: translateX(-100%); 
+                transition: transform 0.3s ease;
+                width: 85%; /* El sidebar no ocupará toda la pantalla */
+                max-width: 320px;
+            }
+            .sidebar-mobile.open { 
+                transform: translateX(0); 
+            }
         }
         
-        /* Modal */
-        #report-modal-bg { 
-            z-index: 5000; 
-            transition: opacity 0.3s ease; 
-        }
-        
-        #report-modal-content { 
-            transition: transform 0.3s ease; 
-        }
-        
-        /* Watermark */
+        /* Watermark para reportes */
         .watermark {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 3rem;
+            font-size: 4rem;
             color: rgba(59, 130, 246, 0.1);
             font-weight: bold;
             pointer-events: none;
@@ -179,270 +61,253 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 
-<body>
-    <!-- Mobile menu button -->
-    <button class="mobile-menu-btn" id="mobile-menu-btn">
+<body class="bg-gray-100 text-gray-800 flex h-screen overflow-hidden">
+
+    <button id="mobile-menu-btn" class="md:hidden fixed top-4 left-4 z-40 bg-white p-2 rounded-lg shadow-lg">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
         </svg>
     </button>
     
-    <!-- Mobile overlay -->
-    <div class="mobile-overlay" id="mobile-overlay"></div>
-    
-    <!-- Main container -->
-    <div class="main-container">
-        <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <!-- Close button for mobile -->
-            <button class="absolute top-4 right-4 md:hidden" id="close-sidebar">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
-            
-            <!-- Header -->
-            <div class="p-4 border-b border-gray-200">
-                <h1 class="text-2xl font-bold text-gray-900">🔥 GeoAlert<span class="text-blue-600">AR</span></h1>
-                <p class="text-sm text-gray-500">Demo Sierras Chicas v1.0</p>
-                <p class="text-xs text-gray-400 mt-1">Sistema de detección de incendios</p>
-            </div>
-            
-            <!-- Info Banner -->
-            <div class="bg-blue-50 border-l-4 border-blue-500 p-3 mx-4 mt-4 rounded-r">
-                <p class="text-xs text-blue-800">
-                    <strong>🔬 Versión Demo:</strong> Sistema en evaluación.
-                    <a href="mailto:geoalertar1@gmail.com" class="underline">Enviar feedback</a>
-                </p>
-            </div>
-            
-            <!-- File loader section -->
-            <div class="p-4 space-y-4 border-b border-gray-200">
-                <div>
-                    <button id="load-demo-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition-all duration-200 flex items-center justify-center space-x-2 mb-2">
-                        <span>🗺️ Cargar Demo Sierras Chicas</span>
-                    </button>
-                    
-                    <label for="csv-file-input" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-                        </svg>
-                        <span>Cargar Otro CSV</span>
-                    </label>
-                    <input type="file" id="csv-file-input" class="hidden" accept=".csv">
-                </div>
-                <div id="status-message" class="text-center text-sm text-gray-500">
-                    Click en "Cargar Demo" para comenzar
-                </div>
-            </div>
-            
-            <!-- Search panel -->
-            <div id="search-panel" class="p-4 space-y-2 border-b border-gray-200 hidden">
-                <label class="block text-sm font-medium text-gray-600">Buscar Localidad</label>
-                <div class="flex space-x-2">
-                    <select id="town-select" class="flex-1 bg-gray-50 border border-gray-300 rounded-md p-2 text-gray-900">
-                        <option>Seleccione...</option>
-                    </select>
-                    <button id="search-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-3 rounded-md">
-                        Ir
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Results panel -->
-            <div id="results-panel" class="flex-1 p-4 space-y-4 overflow-y-auto custom-scrollbar hidden">
-                <div id="stats-summary"></div>
-                <div id="layer-filters"></div>
-            </div>
-            
-            <!-- Footer -->
-            <div class="p-3 border-t border-gray-200 text-xs text-gray-500">
-                <p>🇦🇷 Sistema FireWatch Argentina</p>
-                <p>© 2025 Federico Nicolás Sinato</p>
-            </div>
-        </aside>
+    <div id="sidebar-overlay" class="md:hidden fixed inset-0 bg-black bg-opacity-50 z-30 opacity-0 pointer-events-none"></div>
+
+    <aside id="sidebar" class="w-80 bg-white border-r border-gray-200 flex flex-col h-full fixed md:relative sidebar-mobile z-40 md:translate-x-0">
+        <button id="close-sidebar" class="md:hidden absolute top-4 right-4 text-gray-500">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
         
-        <!-- Map container -->
-        <main class="map-container">
-            <div id="map"></div>
-        </main>
-    </div>
+        <div class="p-4 border-b border-gray-200">
+            <h1 class="text-2xl font-bold text-gray-900">🔥 GeoAlert<span class="text-blue-600">AR</span></h1>
+            <p class="text-sm text-gray-500">Demo Sierras Chicas v1.0</p>
+            <p class="text-xs text-gray-400 mt-1">Actualización diaria automática</p>
+        </div>
+        
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-3 mx-4 mt-4 rounded-r">
+            <p class="text-xs text-blue-800">
+                <strong>🔬 Versión Demo:</strong> Sistema en evaluación para bomberos de Sierras Chicas.
+                <a href="mailto:geoalertar1@gmail.com" class="underline">Enviar feedback</a>
+            </p>
+        </div>
+        
+        <div class="p-4 space-y-4 border-b border-gray-200">
+            <div id="status-message" class="text-center text-sm text-gray-500 h-5">Cargando datos...</div>
+        </div>
+        
+        <div id="search-panel" class="p-4 space-y-2 border-b border-gray-200 hidden">
+            <label for="town-select" class="block text-sm font-medium text-gray-600">Buscar Localidad</label>
+            <div class="flex space-x-2">
+                <select id="town-select" class="w-full bg-gray-50 border border-gray-300 rounded-md p-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none" disabled><option>Cargando...</option></select>
+                <button id="search-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-3 rounded-md transition-all duration-200" disabled>Ir</button>
+            </div>
+        </div>
+        
+        <div id="results-panel" class="p-4 space-y-4 flex-grow overflow-y-auto custom-scrollbar hidden">
+            <div id="stats-summary"></div>
+            <div id="layer-filters"></div>
+        </div>
+        
+        <div class="p-3 border-t border-gray-200 text-xs text-gray-500">
+            <p>🇦🇷 Sistema FireWatch Argentina</p>
+            <p>© 2025 Federico Nicolás Sinato</p>
+        </div>
+    </aside>
+
+    <main class="flex-1 h-full">
+        <div id="map" class="h-full w-full bg-gray-200"></div>
+    </main>
     
-    <!-- Report Modal -->
-    <div id="report-modal-bg" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden opacity-0">
+    <div id="report-modal-bg" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden opacity-0 z-50">
         <div id="report-modal-content" class="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col transform scale-95 relative">
             <div class="watermark">GEOALERTAR</div>
             
             <div class="flex justify-between items-center p-4 border-b border-gray-200">
-                <h2 class="text-xl font-bold text-gray-800">📄 Reporte de Inteligencia</h2>
+                <h2 class="text-xl font-bold text-gray-800">📄 Reporte de Inteligencia de Riesgo</h2>
                 <button id="close-report-btn" class="text-gray-400 hover:text-gray-600 text-3xl leading-none">&times;</button>
             </div>
             
             <div class="bg-red-50 border-l-4 border-red-500 p-3 mx-4 mt-4 rounded-r">
                 <p class="text-xs text-red-800">
-                    <strong>⚠️ CONFIDENCIAL:</strong> Propiedad de GeoAlertAR®. Prohibida su distribución sin autorización.
+                    <strong>⚠️ CONFIDENCIAL:</strong> Este reporte fue generado por GeoAlertAR® y es propiedad intelectual de Federico Nicolás Sinato. 
+                    Prohibida su reproducción o distribución sin autorización expresa. Uso exclusivo para servicios de emergencia autorizados.
                 </p>
             </div>
             
-            <div id="report-content" class="p-6 overflow-y-auto text-gray-700 space-y-4"></div>
+            <div id="report-content" class="p-6 overflow-y-auto text-gray-700 space-y-4 relative z-10"></div>
             
             <div class="p-4 border-t border-gray-200 bg-gray-50 text-xs text-gray-600">
                 <p class="text-center">
-                    GeoAlertAR® | ID: <span id="report-id"></span> | © 2025
+                    Reporte generado por <strong>GeoAlertAR®</strong> | 
+                    ID: <span id="report-id"></span> | 
+                    <span id="report-date"></span> | 
+                    © 2025 Todos los derechos reservados
                 </p>
             </div>
         </div>
     </div>
 
     <script>
-        // DEMO DATA EMBEDDED
-        const DEMO_CSV_DATA = `ciudad,lat,lon,riesgo_final,nivel,poblacion,zona_tipo,region_detectada,ndvi,precipitacion_60d,temperatura,viento_kmh
-agua_de_oro,-31.06694,-64.29056,75.5,ALTO,1500,localidad_principal,Sierras_Chicas,0.35,5.2,28.5,18
-villa_cerro_azul,-31.06889,-64.32131,68.2,ALTO,800,localidad_principal,Sierras_Chicas,0.38,6.1,27.8,15
-el_manzano,-31.07556,-64.29314,82.3,CRÍTICO,600,localidad_principal,Sierras_Chicas,0.28,4.8,29.2,22
-punto_grid_001,-31.055,-64.285,45.6,MODERADO,100,grid_analisis,Sierras_Chicas,0.48,8.3,26.4,12
-punto_grid_002,-31.080,-64.315,71.2,ALTO,100,grid_analisis,Sierras_Chicas,0.32,5.5,28.1,19
-punto_grid_003,-31.045,-64.300,38.9,BAJO,100,grid_analisis,Sierras_Chicas,0.52,12.1,25.3,10
-punto_grid_004,-31.090,-64.290,88.7,CRÍTICO,100,grid_analisis,Sierras_Chicas,0.22,3.2,30.1,25
-punto_grid_005,-31.065,-64.310,54.3,MODERADO,100,grid_analisis,Sierras_Chicas,0.42,7.8,27.0,14`;
-
-        // Global variables
         let map;
         let geoJsonLayer;
         let townData = [];
         let scanAreaCircles = [];
         
-        // UI Elements
         const ui = {
-            sidebar: document.getElementById('sidebar'),
-            mobileMenuBtn: document.getElementById('mobile-menu-btn'),
-            mobileOverlay: document.getElementById('mobile-overlay'),
-            closeSidebar: document.getElementById('close-sidebar'),
-            loadDemoBtn: document.getElementById('load-demo-btn'),
-            fileInput: document.getElementById('csv-file-input'),
             statusMsg: document.getElementById('status-message'),
-            searchPanel: document.getElementById('search-panel'),
             resultsPanel: document.getElementById('results-panel'),
             statsSummary: document.getElementById('stats-summary'),
             layerFilters: document.getElementById('layer-filters'),
+            searchPanel: document.getElementById('search-panel'),
             townSelect: document.getElementById('town-select'),
             searchBtn: document.getElementById('search-btn'),
             reportModalBg: document.getElementById('report-modal-bg'),
+            reportModalContent: document.getElementById('report-modal-content'),
             reportContent: document.getElementById('report-content'),
-            closeReportBtn: document.getElementById('close-report-btn')
+            closeReportBtn: document.getElementById('close-report-btn'),
+            sidebar: document.getElementById('sidebar'),
+            mobileMenuBtn: document.getElementById('mobile-menu-btn'),
+            closeSidebar: document.getElementById('close-sidebar'),
+            sidebarOverlay: document.getElementById('sidebar-overlay')
         };
 
-        // Initialize map
-        function initMap() {
-            const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                attribution: 'Tiles &copy; Esri'
-            });
-            
-            const hybridLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
-                maxZoom: 20,
-                subdomains: ['mt0','mt1','mt2','mt3'],
-                attribution: 'Map data &copy; Google'
-            });
-            
-            map = L.map('map', {
-                center: [-31.07, -64.30],
-                zoom: 11,
-                layers: [hybridLayer]
-            });
-            
-            L.control.layers({
-                "Híbrido": hybridLayer,
-                "Satélite": satelliteLayer
-            }).addTo(map);
-        }
-
-        // Mobile menu handlers
-        function setupMobileMenu() {
-            ui.mobileMenuBtn?.addEventListener('click', () => {
-                ui.sidebar.classList.add('open');
-                ui.mobileOverlay.classList.add('show');
-            });
-
-            ui.closeSidebar?.addEventListener('click', closeMobileMenu);
-            ui.mobileOverlay?.addEventListener('click', closeMobileMenu);
+        // === Lógica del Menú Móvil Mejorada ===
+        function openMobileMenu() {
+            ui.sidebar.classList.add('open');
+            ui.sidebarOverlay.classList.remove('opacity-0', 'pointer-events-none');
         }
 
         function closeMobileMenu() {
             ui.sidebar.classList.remove('open');
-            ui.mobileOverlay.classList.remove('show');
+            ui.sidebarOverlay.classList.add('opacity-0', 'pointer-events-none');
         }
 
-        // Load demo data
-        function loadDemoData() {
-            ui.statusMsg.textContent = 'Cargando demo Sierras Chicas...';
-            processCSVData(DEMO_CSV_DATA);
-            if (window.innerWidth < 768) closeMobileMenu();
-        }
-
-        // Process CSV data
-        function processCSVData(csvText) {
-            const lines = csvText.trim().split('\n');
-            const headers = lines[0].split(',');
+        ui.mobileMenuBtn?.addEventListener('click', openMobileMenu);
+        ui.closeSidebar?.addEventListener('click', closeMobileMenu);
+        ui.sidebarOverlay?.addEventListener('click', closeMobileMenu);
+        
+        function initMap() {
+            const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
+            const hybridLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',{ maxZoom: 20, subdomains:['mt0','mt1','mt2','mt3'], attribution: 'Map data &copy; Google' });
             
-            townData = lines.slice(1).map(line => {
-                const values = line.split(',');
-                const obj = {};
-                headers.forEach((header, i) => {
-                    obj[header] = values[i];
-                });
-                return obj;
+            map = L.map('map', { 
+                center: [-31.07, -64.30], 
+                zoom: window.innerWidth < 768 ? 10 : 11,
+                layers: [hybridLayer],
+                zoomControl: window.innerWidth > 768
             });
             
-            const geojsonData = convertToGeoJSON(townData);
-            renderMapData(geojsonData);
-            updateSidebar(calculateSummary(townData));
-            populateTownSelector(townData);
-            
-            ui.statusMsg.textContent = `✅ ${townData.length} puntos cargados`;
-            ui.searchPanel.classList.remove('hidden');
-            ui.resultsPanel.classList.remove('hidden');
+            const baseMaps = { "Híbrido (Rutas y Nombres)": hybridLayer, "Satélite": satelliteLayer };
+            L.control.layers(baseMaps).addTo(map);
         }
 
-        // Convert to GeoJSON
-        function convertToGeoJSON(data) {
-            const features = data.map(row => ({
-                type: "Feature",
-                geometry: {
-                    type: "Point",
-                    coordinates: [parseFloat(row.lon), parseFloat(row.lat)]
-                },
-                properties: {
-                    nombre: row.ciudad.replace(/_/g, ' '),
-                    riesgo_final: parseFloat(row.riesgo_final),
-                    nivel: row.nivel,
-                    poblacion: parseInt(row.poblacion) || 100,
-                    region_detectada: row.region_detectada || 'Sierras Chicas',
-                    zona_tipo: row.zona_tipo || 'N/A',
-                    ndvi: row.ndvi || 'N/A',
-                    precipitacion_60d: row.precipitacion_60d || 'N/A',
-                    temperatura: row.temperatura || 'N/A',
-                    viento_kmh: row.viento_kmh || 'N/A'
+        function setupEventListeners() {
+            ui.searchBtn.addEventListener('click', handleTownSearch);
+            ui.closeReportBtn.addEventListener('click', closeReportModal);
+            ui.reportModalBg.addEventListener('click', (e) => { 
+                if (e.target === ui.reportModalBg) closeReportModal(); 
+            });
+        }
+
+        // === Carga de Datos Automática ===
+        async function loadInitialData() {
+            try {
+                ui.statusMsg.textContent = 'Cargando datos de Sierras Chicas...';
+                
+                // Corregido: Apunta al archivo 'data' en tu repositorio
+                const response = await fetch('data'); 
+                
+                if (response.ok) {
+                    const csvText = await response.text();
+                    processCSVData(csvText, 'Sierras Chicas');
+                } else {
+                    ui.statusMsg.innerHTML = `<span class="text-red-600 font-bold">❌ Error al cargar datos.</span>`;
                 }
-            }));
-            
+            } catch (error) {
+                console.error("Error al cargar datos:", error);
+                ui.statusMsg.innerHTML = `<span class="text-red-600 font-bold">❌ No se pudo conectar.</span>`;
+            }
+        }
+        
+        function processCSVData(csvText, regionName) {
+            try {
+                const jsonData = parseCSV(csvText);
+                if (jsonData.length === 0) {
+                    throw new Error("El archivo CSV está vacío o tiene un formato incorrecto.");
+                }
+                townData = jsonData;
+                
+                const geojsonData = convertToGeoJSON(jsonData);
+                const summary = calculateSummary(jsonData);
+
+                renderMapData(geojsonData);
+                updateSidebar(summary);
+                populateTownSelector(jsonData);
+                
+                ui.statusMsg.textContent = `✅ ${summary.totalPuntos} puntos cargados`;
+                ui.resultsPanel.classList.remove('hidden');
+                ui.searchPanel.classList.remove('hidden');
+
+            } catch (error) {
+                console.error("Error procesando CSV:", error);
+                ui.statusMsg.innerHTML = `<span class="text-red-600 font-bold">❌ ${error.message}</span>`;
+            }
+        }
+
+        function parseCSV(text) {
+            const lines = text.trim().split(/\r?\n/);
+            if (lines.length < 2) return [];
+            const headers = lines[0].split(',').map(h => h.trim());
+            return lines.slice(1).map(line => {
+                if (!line) return null;
+                const values = line.split(',');
+                const entry = {};
+                headers.forEach((header, index) => { 
+                    entry[header] = values[index] ? values[index].trim() : ''; 
+                });
+                return entry;
+            }).filter(Boolean);
+        }
+
+        function convertToGeoJSON(jsonData) {
+            const features = jsonData.map((row, index) => {
+                const lat = parseFloat(row.lat);
+                const lon = parseFloat(row.lon);
+                if (isNaN(lat) || isNaN(lon)) {
+                    console.warn(`Dato inválido en fila ${index + 2}, se omitirá el punto.`);
+                    return null;
+                }
+                return {
+                    type: "Feature",
+                    geometry: { type: "Point", coordinates: [lon, lat] },
+                    properties: {
+                        nombre: row.ciudad ? row.ciudad.replace(/_/g, ' ') : 'Punto de Análisis',
+                        riesgo_final: parseFloat(row.riesgo_final) || 0,
+                        nivel: row.nivel || 'INDEFINIDO',
+                        poblacion: parseInt(row.poblacion) || 0,
+                        region_detectada: row.region_detectada ? row.region_detectada.replace(/_/g, ' ') : 'S/D',
+                        zona_tipo: row.zona_tipo ? row.zona_tipo.replace(/_/g, ' ') : 'S/D',
+                        ndvi: row.ndvi || 'S/D',
+                        precipitacion_60d: row.precipitacion_60d || 'S/D',
+                        temperatura: row.temperatura || 'S/D',
+                        viento_kmh: row.viento_kmh || 'S/D'
+                    }
+                };
+            }).filter(Boolean); // Filtra los puntos nulos por coordenadas inválidas
             return { type: "FeatureCollection", features };
         }
-
-        // Calculate summary
-        function calculateSummary(data) {
-            const summary = { total: data.length, critico: 0, alto: 0, moderado: 0, bajo: 0 };
-            data.forEach(row => {
-                switch(row.nivel) {
-                    case 'CRÍTICO': summary.critico++; break;
-                    case 'ALTO': summary.alto++; break;
-                    case 'MODERADO': summary.moderado++; break;
-                    case 'BAJO': summary.bajo++; break;
-                }
+        
+        function calculateSummary(jsonData) {
+            const summary = { totalPuntos: jsonData.length, critico: 0, alto: 0, moderado: 0, bajo: 0 };
+            jsonData.forEach(row => {
+                if (row.nivel === 'CRÍTICO') summary.critico++;
+                else if (row.nivel === 'ALTO') summary.alto++;
+                else if (row.nivel === 'MODERADO') summary.moderado++;
+                else if (row.nivel === 'BAJO') summary.bajo++;
             });
             return summary;
         }
 
-        // Render map data
         function renderMapData(geojsonData) {
             if (geoJsonLayer) map.removeLayer(geoJsonLayer);
             scanAreaCircles.forEach(c => map.removeLayer(c));
@@ -450,57 +315,20 @@ punto_grid_005,-31.065,-64.310,54.3,MODERADO,100,grid_analisis,Sierras_Chicas,0.
 
             geoJsonLayer = L.geoJSON(geojsonData, {
                 pointToLayer: (feature, latlng) => {
-                    const circle = L.circle(latlng, {
-                        radius: 1000,
-                        color: '#ffffff',
-                        weight: 1,
-                        opacity: 0.3,
-                        fillColor: '#ffffff',
-                        fillOpacity: 0.05
+                    const areaCircle = L.circle(latlng, { 
+                        radius: 1000, color: '#ffffff', weight: 1, opacity: 0.3, fillColor: '#ffffff', fillOpacity: 0.05 
                     });
-                    scanAreaCircles.push(circle);
+                    scanAreaCircles.push(areaCircle);
 
-                    const colors = {
-                        'CRÍTICO': '#ef4444',
-                        'ALTO': '#f97316',
-                        'MODERADO': '#eab308',
-                        'BAJO': '#22c55e'
-                    };
-                    
-                    const color = colors[feature.properties.nivel] || '#6b7280';
-                    
-                    return L.marker(latlng, {
+                    return L.marker(latlng, { 
                         icon: L.divIcon({
-                            html: `<div style="width: 32px; height: 42px;">
-                                <svg viewBox="0 0 32 42" fill="none" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));">
-                                    <path d="M16 0C7.16344 0 0 7.16344 0 16C0 28 16 42 16 42C16 42 32 28 32 16C32 7.16344 24.8366 0 16 0Z" fill="${color}"/>
-                                    <circle cx="16" cy="16" r="7" fill="white"/>
-                                </svg>
-                            </div>`,
-                            className: 'leaflet-div-icon',
-                            iconSize: [32, 42],
-                            iconAnchor: [16, 42]
+                            html: createMarkerIcon(feature.properties.nivel),
+                            className: 'leaflet-div-icon', 
+                            iconSize: [32, 42], iconAnchor: [16, 42], popupAnchor: [0, -42]
                         })
                     });
                 },
-                onEachFeature: (feature, layer) => {
-                    const props = feature.properties;
-                    layer.bindPopup(`
-                        <div style="min-width: 200px;">
-                            <h3 class="font-bold text-lg">${props.nombre.toUpperCase()}</h3>
-                            <p><strong>${props.nivel}</strong> (${props.riesgo_final.toFixed(1)}%)</p>
-                            <hr class="my-2">
-                            <p>NDVI: ${props.ndvi}</p>
-                            <p>Precipitación: ${props.precipitacion_60d} mm</p>
-                            <p>Temperatura: ${props.temperatura}°C</p>
-                            <p>Viento: ${props.viento_kmh} km/h</p>
-                            <button onclick='generateReport(${JSON.stringify(props)})' 
-                                class="w-full mt-2 bg-blue-500 text-white p-2 rounded">
-                                Generar Reporte
-                            </button>
-                        </div>
-                    `);
-                }
+                onEachFeature: (feature, layer) => layer.bindPopup(createPopupContent(feature.properties))
             }).addTo(map);
             
             if (geojsonData.features.length > 0) {
@@ -508,88 +336,205 @@ punto_grid_005,-31.065,-64.310,54.3,MODERADO,100,grid_analisis,Sierras_Chicas,0.
             }
         }
 
-        // Update sidebar
         function updateSidebar(summary) {
             ui.statsSummary.innerHTML = `
-                <h3 class="text-lg font-semibold mb-2">Resumen de Riesgo</h3>
-                <div class="bg-gray-50 p-3 rounded-lg space-y-2 text-sm">
-                    <div>Total: ${summary.total}</div>
-                    <div class="text-red-600">🔴 Crítico: ${summary.critico}</div>
-                    <div class="text-orange-500">🟠 Alto: ${summary.alto}</div>
-                    <div class="text-yellow-500">🟡 Moderado: ${summary.moderado}</div>
-                    <div class="text-green-600">🟢 Bajo: ${summary.bajo}</div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Resumen de Riesgo</h3>
+                <div class="bg-gray-50 p-3 rounded-lg space-y-2 text-sm border border-gray-200">
+                    <div class="flex justify-between"><span>Puntos Analizados:</span><span class="font-semibold text-gray-900">${summary.totalPuntos}</span></div><hr class="border-gray-200 my-2">
+                    <div class="flex justify-between text-red-600"><span>🔴 Crítico:</span><span class="font-semibold">${summary.critico}</span></div>
+                    <div class="flex justify-between text-orange-500"><span>🟠 Alto:</span><span class="font-semibold">${summary.alto}</span></div>
+                    <div class="flex justify-between text-yellow-500"><span>🟡 Moderado:</span><span class="font-semibold">${summary.moderado}</span></div>
+                    <div class="flex justify-between text-green-600"><span>🟢 Bajo:</span><span class="font-semibold">${summary.bajo}</span></div>
                 </div>
-            `;
+                <div class="mt-3 text-xs text-gray-500"><p>📅 Última actualización: ${new Date().toLocaleDateString('es-AR')}</p></div>`;
+            
+            const riskLevels = [
+                { id: 'critico', name: 'Crítico', color: 'text-red-600' }, { id: 'alto', name: 'Alto', color: 'text-orange-500' },
+                { id: 'moderado', name: 'Moderado', color: 'text-yellow-500' }, { id: 'bajo', name: 'Bajo', color: 'text-green-600' }
+            ];
+            
+            ui.layerFilters.innerHTML = `
+                <h3 class="text-lg font-semibold text-gray-900 mb-2 mt-4">Filtros de Capas</h3>
+                <div class="space-y-2 text-sm">
+                    ${riskLevels.map(level => `
+                        <label for="filter-${level.id}" class="flex items-center space-x-3 cursor-pointer p-1 rounded-md hover:bg-gray-100">
+                            <input type="checkbox" id="filter-${level.id}" data-level="${level.name.toUpperCase()}" checked class="bg-gray-200 border-gray-300 rounded text-blue-600 focus:ring-blue-500 h-4 w-4">
+                            <span class="font-medium ${level.color}">${level.name}</span>
+                        </label>`).join('')}
+                    <hr class="my-2 border-gray-200">
+                    <label for="filter-area" class="flex items-center space-x-3 cursor-pointer p-1 rounded-md hover:bg-gray-100">
+                        <input type="checkbox" id="filter-area" class="bg-gray-200 border-gray-300 rounded text-blue-600 focus:ring-blue-500 h-4 w-4">
+                        <span class="font-medium text-gray-700">🛰️ Mostrar Área de Análisis</span>
+                    </label>
+                </div>`;
+            
+            document.querySelectorAll('#layer-filters input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', checkbox.id === 'filter-area' ? toggleScanArea : handleFilterChange);
+            });
         }
 
-        // Populate town selector
-        function populateTownSelector(data) {
-            const towns = [...new Set(data.map(d => d.ciudad.replace(/_/g, ' ')))];
-            ui.townSelect.innerHTML = '<option value="">Seleccione...</option>';
-            towns.forEach(town => {
+        function populateTownSelector(jsonData) {
+            const townNames = [...new Set(jsonData.map(item => item.ciudad.replace(/_/g, ' ')))].sort();
+            ui.townSelect.innerHTML = '<option value="">Seleccione una localidad...</option>';
+            townNames.forEach(name => {
                 const option = document.createElement('option');
-                option.value = town;
-                option.textContent = town;
+                option.value = name;
+                option.textContent = name;
                 ui.townSelect.appendChild(option);
             });
+            ui.townSelect.disabled = false;
+            ui.searchBtn.disabled = false;
         }
 
-        // Generate report
-        function generateReport(props) {
-            const reportId = 'GAR-' + Date.now().toString(36).toUpperCase();
-            document.getElementById('report-id').textContent = reportId;
-            
-            ui.reportContent.innerHTML = `
-                <h3 class="text-lg font-bold mb-2">
-                    Reporte: ${props.nombre.toUpperCase()}
-                </h3>
-                <p>Nivel: <strong>${props.nivel}</strong> (${props.riesgo_final}%)</p>
-                <p>Región: ${props.region_detectada}</p>
-                <div class="mt-4 p-3 bg-yellow-50 rounded">
-                    <p class="text-sm">Sistema GeoAlertAR® - Uso exclusivo autorizado</p>
-                </div>
-            `;
-            
-            ui.reportModalBg.classList.remove('hidden');
-            setTimeout(() => ui.reportModalBg.classList.remove('opacity-0'), 10);
-        }
-
-        // Setup event listeners
-        function setupEventListeners() {
-            ui.loadDemoBtn?.addEventListener('click', loadDemoData);
-            ui.fileInput?.addEventListener('change', handleFileUpload);
-            ui.searchBtn?.addEventListener('click', handleSearch);
-            ui.closeReportBtn?.addEventListener('click', () => {
-                ui.reportModalBg.classList.add('opacity-0');
-                setTimeout(() => ui.reportModalBg.classList.add('hidden'), 300);
-            });
-        }
-
-        function handleFileUpload(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => processCSVData(e.target.result);
-                reader.readAsText(file);
-            }
-        }
-
-        function handleSearch() {
-            const selected = ui.townSelect.value;
-            if (selected) {
-                const point = townData.find(d => d.ciudad.replace(/_/g, ' ') === selected);
-                if (point) {
-                    map.flyTo([parseFloat(point.lat), parseFloat(point.lon)], 14);
+        function handleTownSearch() {
+            const selectedTown = ui.townSelect.value;
+            if (!selectedTown) return;
+            const targetPoint = townData.find(p => p.ciudad.replace(/_/g, ' ') === selectedTown);
+            if (targetPoint) {
+                const lat = parseFloat(targetPoint.lat);
+                const lon = parseFloat(targetPoint.lon);
+                if (!isNaN(lat) && !isNaN(lon)) {
+                    map.flyTo([lat, lon], 14);
+                    geoJsonLayer.eachLayer(layer => {
+                        if (layer.feature.geometry.coordinates[0] === lon && layer.feature.geometry.coordinates[1] === lat) {
+                            layer.openPopup();
+                        }
+                    });
                     if (window.innerWidth < 768) closeMobileMenu();
                 }
             }
         }
 
-        // Initialize everything
+        function toggleScanArea() {
+            const showArea = document.getElementById('filter-area').checked;
+            scanAreaCircles.forEach(circle => {
+                if (showArea) map.addLayer(circle); else map.removeLayer(circle);
+            });
+        }
+
+        function createMarkerIcon(nivel) {
+            const colors = { 'CRÍTICO': '#ef4444', 'ALTO': '#f97316', 'MODERADO': '#eab308', 'BAJO': '#22c55e' };
+            const color = colors[nivel] || '#6b7280';
+            return `<div class="${nivel === 'CRÍTICO' ? 'pulse' : ''}" style="width: 32px; height: 42px;">
+                <svg viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));">
+                    <path d="M16 0C7.16344 0 0 7.16344 0 16C0 28 16 42 16 42C16 42 32 28 32 16C32 7.16344 24.8366 0 16 0Z" fill="${color}"/>
+                    <circle cx="16" cy="16" r="7" fill="white"/>
+                </svg>
+            </div>`;
+        }
+
+        function createPopupContent(props) {
+            const riesgoFinal = props.riesgo_final ? props.riesgo_final.toFixed(1) : 'N/A';
+            const poblacion = props.poblacion ? parseInt(props.poblacion).toLocaleString('es-AR') : 'N/A';
+            const nivelColor = props.nivel === 'CRÍTICO' ? 'text-red-600' : 
+                               props.nivel === 'ALTO' ? 'text-orange-500' : 
+                               props.nivel === 'MODERADO' ? 'text-yellow-500' : 'text-green-600';
+            
+            return `
+                <div class="text-gray-800" style="min-width: 230px;">
+                    <h3 class="font-bold text-lg mb-2 border-b border-gray-200 pb-1 text-gray-900">${props.nombre.toUpperCase()}</h3>
+                    <div class="space-y-1 text-sm">
+                        <p><strong class="${nivelColor} text-base">${props.nivel}</strong> (${riesgoFinal}%)</p>
+                        <p><strong>Población Afectada:</strong> ${poblacion}</p>
+                        <p><strong>Tipo de Zona:</strong> ${props.zona_tipo}</p>
+                    </div>
+                    <hr class="my-2 border-gray-200">
+                    <div class="text-xs text-gray-500">
+                        <p><strong>NDVI:</strong> ${props.ndvi}</p>
+                        <p><strong>Precip (60d):</strong> ${props.precipitacion_60d} mm</p>
+                        <p><strong>Temp:</strong> ${props.temperatura} °C</p>
+                        <p><strong>Viento:</strong> ${props.viento_kmh} km/h</p>
+                    </div>
+                    <button class="w-full mt-3 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-1 px-2 rounded" 
+                        onclick='generateReport(${JSON.stringify(props).replace(/'/g, "\\'")})'>
+                        Generar Reporte de Inteligencia
+                    </button>
+                </div>`;
+        }
+        
+        function generateReport(props) {
+            const reportId = 'GAR-' + Date.now().toString(36).toUpperCase();
+            const reportDate = new Date().toLocaleString('es-AR');
+            document.getElementById('report-id').textContent = reportId;
+            document.getElementById('report-date').textContent = reportDate;
+            
+            ui.reportContent.innerHTML = `
+                <div class="mb-4">
+                    <h3 class="text-lg font-bold">Reporte para: <span class="text-blue-600">${props.nombre.toUpperCase()}</span></h3>
+                    <p class="text-sm text-gray-500">ID Reporte: ${reportId}</p>
+                    <p class="text-sm text-gray-500">Fecha de Análisis: ${reportDate}</p>
+                </div>
+                <div class="bg-gray-100 p-4 rounded-lg"><h4 class="font-bold text-lg mb-2">Resumen Ejecutivo</h4><p>${getExecutiveSummary(props)}</p></div>
+                <div><h4 class="font-bold text-lg my-2">Análisis de Componentes</h4><div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div class="bg-gray-50 p-3 rounded-md border">${getFuelAnalysis(props)}</div>
+                    <div class="bg-gray-50 p-3 rounded-md border">${getWeatherAnalysis(props)}</div>
+                </div></div>
+                <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded-r-lg mt-2"><h4 class="font-bold">Conclusión y Recomendación</h4><p>${getConclusion(props)}</p></div>
+                <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded"><p class="text-xs text-yellow-800"><strong>⚠️ Nota Legal:</strong> Este reporte es generado automáticamente por GeoAlertAR® basado en datos satelitales. La información debe ser verificada con fuentes oficiales antes de tomar decisiones operativas.</p></div>`;
+            
+            openReportModal();
+        }
+
+        function getExecutiveSummary(props) {
+            const riesgo = props.riesgo_final ? `(${props.riesgo_final.toFixed(1)}%)` : '';
+            if (props.nivel === 'CRÍTICO') return `El nivel de riesgo es <strong>CRÍTICO ${riesgo}</strong>. La combinación de combustible extremadamente seco y condiciones meteorológicas adversas crea un escenario de peligro inminente.`;
+            if (props.nivel === 'ALTO') return `El nivel de riesgo es <strong>ALTO ${riesgo}</strong>. El combustible vegetal se encuentra muy seco y propenso a la ignición.`;
+            if (props.nivel === 'MODERADO') return `El nivel de riesgo es <strong>MODERADO ${riesgo}</strong>. Se detectan algunos factores de estrés en la vegetación.`;
+            return `El nivel de riesgo es <strong>BAJO ${riesgo}</strong>. Las condiciones actuales son seguras.`;
+        }
+
+        function getFuelAnalysis(props) {
+            let ndvi_desc = parseFloat(props.ndvi) < 0.3 ? "extremadamente bajo, vegetación muy seca." : parseFloat(props.ndvi) < 0.5 ? "bajo, indicando estrés hídrico." : "saludable, buena humedad.";
+            let precip_desc = parseFloat(props.precipitacion_60d) < 10 ? "casi nula, sequía profunda." : parseFloat(props.precipitacion_60d) < 50 ? "muy escasa." : "suficiente.";
+            return `<h5 class="font-bold mb-1">1. Condición del Combustible</h5><p>NDVI: <strong>${props.ndvi}</strong>, ${ndvi_desc}</p><p>Precipitación 60d: <strong>${props.precipitacion_60d} mm</strong>, ${precip_desc}</p>`;
+        }
+
+        function getWeatherAnalysis(props) {
+            let temp_desc = parseFloat(props.temperatura) > 30 ? "muy alta, riesgo crítico." : parseFloat(props.temperatura) > 25 ? "elevada." : "moderada.";
+            let viento_desc = parseFloat(props.viento_kmh) > 30 ? "extremadamente peligroso." : parseFloat(props.viento_kmh) > 20 ? "fuerte, acelerante." : "moderado.";
+            return `<h5 class="font-bold mb-1">2. Peligro Meteorológico</h5><p>Temperatura: <strong>${props.temperatura}°C</strong>, ${temp_desc}</p><p>Viento: <strong>${props.viento_kmh} km/h</strong>, ${viento_desc}</p>`;
+        }
+
+        function getConclusion(props) {
+            if (props.nivel === 'CRÍTICO') return `Se recomienda <strong>alerta máxima</strong> y pre-posición de recursos.`;
+            if (props.nivel === 'ALTO') return `Se recomienda <strong>vigilancia intensiva</strong> y patrullas preventivas.`;
+            if (props.nivel === 'MODERADO') return `Mantener <strong>alerta y monitoreo</strong> regular.`;
+            return `Condiciones seguras. Continuar monitoreo regular.`;
+        }
+
+        function openReportModal() {
+            ui.reportModalBg.classList.remove('hidden');
+            setTimeout(() => {
+                ui.reportModalBg.classList.remove('opacity-0');
+                ui.reportModalContent.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeReportModal() {
+            ui.reportModalBg.classList.add('opacity-0');
+            ui.reportModalContent.classList.add('scale-95');
+            setTimeout(() => { ui.reportModalBg.classList.add('hidden'); }, 300);
+        }
+        
+        function handleFilterChange() {
+            const activeLevels = [];
+            document.querySelectorAll('#layer-filters input[type="checkbox"]:checked').forEach(checkbox => {
+                if(checkbox.dataset.level) activeLevels.push(checkbox.dataset.level);
+            });
+            geoJsonLayer.eachLayer(layer => {
+                if (activeLevels.includes(layer.feature.properties.nivel)) {
+                    map.addLayer(layer);
+                } else {
+                    map.removeLayer(layer);
+                }
+            });
+        }
+
+        // === Inicialización de la Aplicación ===
         document.addEventListener('DOMContentLoaded', () => {
             initMap();
-            setupMobileMenu();
             setupEventListeners();
+            loadInitialData(); // Carga los datos al iniciar
         });
     </script>
 </body>
