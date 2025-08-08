@@ -5,13 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GeoAlertAR - Sistema de Detección de Incendios | Sierras Chicas Demo</title>
     
+    <!-- Meta tags -->
     <meta name="description" content="Sistema de detección temprana de incendios - Sierras Chicas, Córdoba">
     <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
     
+    <!-- Librerías -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
+    <!-- Estilos Personalizados -->
     <style>
         body { font-family: 'Inter', sans-serif; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
@@ -84,7 +87,11 @@
         <div id="report-modal-content" class="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col transform scale-95 relative">
             <div class="watermark">GEOALERTAR</div>
             <div class="flex justify-between items-center p-4 border-b"><h2 class="text-xl font-bold text-gray-800">📄 Reporte de Inteligencia de Riesgo</h2><button id="close-report-btn" class="text-gray-400 hover:text-gray-600 text-3xl">&times;</button></div>
-            <div class="bg-red-50 border-l-4 border-red-500 p-3 mx-4 mt-4 rounded-r"><p class="text-xs text-red-800"><strong>⚠️ CONFIDENCIAL:</strong> Propiedad de Federico Sinato. Prohibida su distribución.</p></div>
+            
+            <div class="bg-red-50 border-l-4 border-red-500 p-3 mx-4 mt-4 rounded-r">
+                <p class="text-xs text-red-800"><strong>⚠️ CONFIDENCIAL:</strong> Propiedad de GeoAlertAR. Prohibida su distribución.</p>
+            </div>
+
             <div id="report-content" class="p-6 overflow-y-auto text-gray-700 space-y-4 relative z-10"></div>
             <div class="p-4 border-t bg-gray-50 text-xs text-gray-600"><p class="text-center">Reporte por <strong>GeoAlertAR®</strong> | ID: <span id="report-id"></span> | <span id="report-date"></span></p></div>
         </div>
@@ -245,15 +252,36 @@
             const color = colors[nivel?.toUpperCase()] || '#6b7280';
             return `<div class="${nivel?.toUpperCase() === 'CRÍTICO' ? 'pulse' : ''}" style="width:32px;height:42px;"><svg viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 4px 6px rgba(0,0,0,0.3));"><path d="M16 0C7.16344 0 0 7.16344 0 16C0 28 16 42 16 42C16 42 32 28 32 16C32 7.16344 24.8366 0 16 0Z" fill="${color}"/><circle cx="16" cy="16" r="7" fill="white"/></svg></div>`;
         };
-
-        const createPopupContent = (props) => {
-            const datosCrudosHTML = `<hr class="my-2 border-gray-200"><div class="text-xs text-gray-500 grid grid-cols-2 gap-x-2"><div><strong>NDVI:</strong> ${props.ndvi || 'N/A'}</div><div><strong>Temp:</strong> ${props.temperatura || 'N/A'}°C</div><div><strong>Precip:</strong> ${props.precipitacion_60d || 'N/A'}mm</div><div><strong>Viento:</strong> ${props.viento_kmh || 'N/A'}km/h</div></div>`;
-            return `<div class="text-gray-800" style="min-width:230px;"><h3 class="font-bold text-lg mb-2 border-b border-gray-200 pb-1 text-gray-900">${props.nombre.toUpperCase()}</h3><div class="space-y-1 text-sm"><p><strong class="text-base">${props.nivel}</strong> (${parseFloat(props.riesgo_final).toFixed(1)}%)</p><p><strong>Población:</strong> ${parseInt(props.poblacion || 0).toLocaleString('es-AR')}</p></div>${datosCrudosHTML}<button class="w-full mt-3 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-1 px-2 rounded" onclick='generateReport(${JSON.stringify(props)})'>Generar Reporte de Inteligencia</button></div>`;
-        };
         
         // =================================================================================
-        // == INICIO DE LA SECCIÓN DE REPORTE RESTAURADA A LA VERSIÓN COMPLETA Y DETALLADA ==
+        // == INICIO DE LA SECCIÓN RESTAURADA (POPUP Y REPORTE) ==
         // =================================================================================
+        const createPopupContent = (props) => {
+            const poblacion = props.poblacion ? parseInt(props.poblacion).toLocaleString('es-AR') : 'N/A';
+            const riesgo = props.riesgo_final ? parseFloat(props.riesgo_final).toFixed(1) : 'N/A';
+            const nivel = props.nivel || 'Indeterminado';
+            const region = props.region_detectada ? props.region_detectada.replace(/_/g, ' ') : 'N/A';
+
+            const datosCrudosHTML = `<hr class="my-2 border-gray-200">
+            <div class="text-xs text-gray-500">
+                <p><strong>NDVI:</strong> ${props.ndvi || 'N/A'}</p>
+                <p><strong>Precip (60d):</strong> ${props.precipitacion_60d || 'N/A'} mm</p>
+                <p><strong>Temp:</strong> ${props.temperatura || 'N/A'} °C</p>
+                <p><strong>Viento:</strong> ${props.viento_kmh || 'N/A'} km/h</p>
+            </div>`;
+
+            return `<div class="text-gray-800" style="min-width: 230px;">
+                        <h3 class="font-bold text-lg mb-2 border-b border-gray-200 pb-1 text-gray-900">${props.nombre.toUpperCase()}</h3>
+                        <div class="space-y-1 text-sm">
+                            <p><strong class="${nivel === 'CRÍTICO' ? 'text-red-600' : nivel === 'ALTO' ? 'text-orange-500' : 'text-gray-600'} text-base">${nivel}</strong> (${riesgo}%)</p>
+                            <p><strong>Población:</strong> ${poblacion}</p>
+                            <p><strong>Región:</strong> ${region}</p>
+                        </div>
+                        ${datosCrudosHTML}
+                        <button class="w-full mt-3 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-1 px-2 rounded" onclick='generateReport(${JSON.stringify(props)})'>Generar Reporte de Inteligencia</button>
+                    </div>`;
+        };
+        
         const generateReport = (props) => {
             const id = 'GAR-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substr(2, 5).toUpperCase();
             const date = new Date().toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
@@ -320,9 +348,9 @@
                 </div>`;
             openReportModal();
         };
-        // ===============================================================================
-        // == FIN DE LA SECCIÓN DE REPORTE RESTAURADA A LA VERSIÓN COMPLETA Y DETALLADA ==
-        // ===============================================================================
+        // =================================================================================
+        // == FIN DE LA SECCIÓN RESTAURADA ==
+        // =================================================================================
 
         const openReportModal = () => { ui.reportModalBg.classList.remove('hidden'); setTimeout(() => ui.reportModalBg.classList.remove('opacity-0'), 10); };
         const closeReportModal = () => { ui.reportModalBg.classList.add('opacity-0'); setTimeout(() => ui.reportModalBg.classList.add('hidden'), 300); };
