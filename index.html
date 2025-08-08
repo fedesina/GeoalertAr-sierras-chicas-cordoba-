@@ -5,16 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GeoAlertAR - Sistema de Detección de Incendios | Sierras Chicas Demo</title>
     
-    <!-- Meta tags -->
     <meta name="description" content="Sistema de detección temprana de incendios - Sierras Chicas, Córdoba">
     <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
     
-    <!-- Librerías -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <!-- Estilos Personalizados y Corrección Definitiva para Móviles -->
     <style>
         body { font-family: 'Inter', sans-serif; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
@@ -26,39 +23,18 @@
         .leaflet-popup-content-wrapper { border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
         .leaflet-popup-tip { background: #ffffff; }
 
-        /* === CORRECCIÓN DE CAPAS (Z-INDEX) PARA FUNCIONALIDAD MÓVIL === */
-        #mobile-menu-btn {
-            z-index: 1001;
-        }
-        #sidebar-overlay {
-            z-index: 1999;
-            transition: opacity 0.3s ease;
-        }
-        #sidebar {
-            z-index: 2000;
-        }
-        #report-modal-bg {
-            z-index: 3000;
-            transition: opacity 0.3s ease;
-        }
+        #mobile-menu-btn { z-index: 1001; }
+        #sidebar-overlay { z-index: 1999; transition: opacity 0.3s ease; }
+        #sidebar { z-index: 2000; }
+        #report-modal-bg { z-index: 3000; transition: opacity 0.3s ease; }
         #report-modal-content { transition: transform 0.3s ease; }
 
         @media (max-width: 768px) {
-            #sidebar { 
-                transform: translateX(-100%); 
-                transition: transform 0.3s ease;
-                width: 85%;
-                max-width: 320px;
-            }
+            #sidebar { transform: translateX(-100%); transition: transform 0.3s ease; width: 85%; max-width: 320px; }
             #sidebar.open { transform: translateX(0); }
         }
         
-        .watermark {
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 4rem; color: rgba(59, 130, 246, 0.1);
-            font-weight: bold; pointer-events: none; z-index: 1;
-        }
+        .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 4rem; color: rgba(59, 130, 246, 0.1); font-weight: bold; pointer-events: none; z-index: 1; }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -252,9 +228,7 @@
                 if (!isNaN(lat) && !isNaN(lon)) {
                     map.flyTo([lat, lon], 14);
                     geoJsonLayer.eachLayer(layer => {
-                        if (layer.feature.properties.nombre === selectedTown) {
-                            layer.openPopup();
-                        }
+                        if (layer.feature.properties.nombre === selectedTown) layer.openPopup();
                     });
                     if (window.innerWidth < 768) closeMobileMenu();
                 }
@@ -268,59 +242,66 @@
 
         const createMarkerIcon = (nivel) => {
             const colors = { 'CRÍTICO': '#ef4444', 'ALTO': '#f97316', 'MODERADO': '#eab308', 'BAJO': '#22c55e' };
-            const color = colors[nivel] || '#6b7280';
-            return `<div class="${nivel === 'CRÍTICO' ? 'pulse' : ''}" style="width:32px;height:42px;"><svg viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 4px 6px rgba(0,0,0,0.3));"><path d="M16 0C7.16344 0 0 7.16344 0 16C0 28 16 42 16 42C16 42 32 28 32 16C32 7.16344 24.8366 0 16 0Z" fill="${color}"/><circle cx="16" cy="16" r="7" fill="white"/></svg></div>`;
+            const color = colors[nivel?.toUpperCase()] || '#6b7280';
+            return `<div class="${nivel?.toUpperCase() === 'CRÍTICO' ? 'pulse' : ''}" style="width:32px;height:42px;"><svg viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 4px 6px rgba(0,0,0,0.3));"><path d="M16 0C7.16344 0 0 7.16344 0 16C0 28 16 42 16 42C16 42 32 28 32 16C32 7.16344 24.8366 0 16 0Z" fill="${color}"/><circle cx="16" cy="16" r="7" fill="white"/></svg></div>`;
         };
 
-        const createPopupContent = (props) => `<div class="text-gray-800" style="min-width:220px;"><h3 class="font-bold text-lg mb-2 border-b pb-1">${props.nombre.toUpperCase()}</h3><p><strong>Riesgo:</strong> ${props.nivel} (${parseFloat(props.riesgo_final).toFixed(1)}%)</p><hr class="my-2"><button class="w-full mt-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-1 px-2 rounded" onclick='generateReport(${JSON.stringify(props)})'>Generar Reporte</button></div>`;
+        const createPopupContent = (props) => {
+            const datosCrudosHTML = `<hr class="my-2 border-gray-200"><div class="text-xs text-gray-500 grid grid-cols-2 gap-x-2"><div><strong>NDVI:</strong> ${props.ndvi || 'N/A'}</div><div><strong>Temp:</strong> ${props.temperatura || 'N/A'}°C</div><div><strong>Precip:</strong> ${props.precipitacion_60d || 'N/A'}mm</div><div><strong>Viento:</strong> ${props.viento_kmh || 'N/A'}km/h</div></div>`;
+            return `<div class="text-gray-800" style="min-width:230px;"><h3 class="font-bold text-lg mb-2 border-b border-gray-200 pb-1 text-gray-900">${props.nombre.toUpperCase()}</h3><div class="space-y-1 text-sm"><p><strong class="text-base">${props.nivel}</strong> (${parseFloat(props.riesgo_final).toFixed(1)}%)</p><p><strong>Población:</strong> ${parseInt(props.poblacion || 0).toLocaleString('es-AR')}</p></div>${datosCrudosHTML}<button class="w-full mt-3 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-1 px-2 rounded" onclick='generateReport(${JSON.stringify(props)})'>Generar Reporte de Inteligencia</button></div>`;
+        };
         
+        // =================================================================================
+        // == INICIO DE LA SECCIÓN DE REPORTE RESTAURADA A LA VERSIÓN COMPLETA Y DETALLADA ==
+        // =================================================================================
         const generateReport = (props) => {
-            const id = 'GAR-' + Date.now().toString(36).toUpperCase();
-            const date = new Date().toLocaleString('es-AR');
-            document.getElementById('report-id').textContent = id; 
+            const id = 'GAR-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substr(2, 5).toUpperCase();
+            const date = new Date().toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
+            document.getElementById('report-id').textContent = id;
             document.getElementById('report-date').textContent = date;
-            
+
             const getExecutiveSummary = (p) => {
+                const nivel = p.nivel?.toUpperCase();
                 const riesgo = p.riesgo_final ? `(${parseFloat(p.riesgo_final).toFixed(1)}%)` : '';
                 const summaries = {
-                    'CRÍTICO': `El nivel de riesgo es <strong>CRÍTICO ${riesgo}</strong>. La combinación de combustible extremadamente seco y condiciones meteorológicas adversas crea un escenario de peligro inminente.`,
-                    'ALTO': `El nivel de riesgo es <strong>ALTO ${riesgo}</strong>. El combustible vegetal se encuentra muy seco y propenso a la ignición.`,
-                    'MODERADO': `El nivel de riesgo es <strong>MODERADO ${riesgo}</strong>. Se detectan algunos factores de estrés en la vegetación.`,
-                    'BAJO': `El nivel de riesgo es <strong>BAJO ${riesgo}</strong>. Las condiciones actuales son seguras.`
+                    'CRÍTICO': `El nivel de riesgo es <strong>CRÍTICO ${riesgo}</strong>. La combinación de combustible extremadamente seco y condiciones meteorológicas adversas crea un escenario de peligro inminente, con alto potencial de ignición y propagación explosiva.`,
+                    'ALTO': `El nivel de riesgo es <strong>ALTO ${riesgo}</strong>. El combustible vegetal se encuentra en una condición muy seca y propensa a la ignición. Aunque las condiciones meteorológicas no son extremas, cualquier foco podría propagarse con rapidez.`,
+                    'MODERADO': `El nivel de riesgo es <strong>MODERADO ${riesgo}</strong>. Se detectan algunos factores de estrés en la vegetación y el clima. No hay peligro inminente, pero se requiere vigilancia ya que las condiciones podrían deteriorarse.`,
+                    'BAJO': `El nivel de riesgo es <strong>BAJO ${riesgo}</strong>. Las condiciones de humedad en el combustible y la meteorología actual no son propicias para la ignición o propagación significativa de incendios.`
                 };
-                return summaries[p.nivel] || 'Riesgo no determinado.';
+                return summaries[nivel] || 'El nivel de riesgo no ha sido determinado. Revise los datos de entrada.';
             };
 
             const getFuelAnalysis = (p) => {
                 const ndvi = parseFloat(p.ndvi);
                 const precip = parseFloat(p.precipitacion_60d);
-                const ndvi_desc = isNaN(ndvi) ? "dato no disponible" : ndvi < 0.3 ? "extremadamente bajo, vegetación muy seca." : ndvi < 0.5 ? "bajo, indicando estrés hídrico." : "saludable, buena humedad.";
-                const precip_desc = isNaN(precip) ? "dato no disponible" : precip < 10 ? "casi nula, sequía profunda." : precip < 50 ? "muy escasa." : "suficiente.";
-                return `<h5 class="font-bold mb-1">1. Condición del Combustible</h5><p>NDVI: <strong>${p.ndvi}</strong>, ${ndvi_desc}</p><p>Precipitación 60d: <strong>${p.precipitacion_60d} mm</strong>, ${precip_desc}</p>`;
+                const ndvi_desc = isNaN(ndvi) ? "dato no disponible" : ndvi < 0.3 ? "extremadamente bajo, indicando vegetación muy seca y estresada." : ndvi < 0.5 ? "bajo, indicando estrés hídrico y combustible seco." : "saludable, indicando buena humedad en la vegetación.";
+                const precip_desc = isNaN(precip) ? "dato no disponible" : precip < 10 ? "casi nula, lo que resulta en una sequía profunda del suelo y combustible muerto." : precip < 50 ? "muy escasa, contribuyendo a la sequedad general del combustible." : "suficiente para mantener niveles de humedad seguros.";
+                return `<h5 class="font-bold mb-1 text-gray-700">1. Condición del Combustible</h5><p>El índice de vegetación (NDVI) es de <strong>${p.ndvi}</strong>, un valor ${ndvi_desc}</p><p>La precipitación en los últimos 60 días ha sido de <strong>${p.precipitacion_60d} mm</strong>, una cantidad ${precip_desc}</p>`;
             };
 
             const getWeatherAnalysis = (p) => {
                 const temp = parseFloat(p.temperatura);
                 const viento = parseFloat(p.viento_kmh);
-                const temp_desc = isNaN(temp) ? "dato no disponible" : temp > 30 ? "muy alta, riesgo crítico." : temp > 25 ? "elevada." : "moderada.";
-                const viento_desc = isNaN(viento) ? "dato no disponible" : viento > 30 ? "extremadamente peligroso." : viento > 20 ? "fuerte, acelerante." : "moderado.";
-                return `<h5 class="font-bold mb-1">2. Peligro Meteorológico</h5><p>Temperatura: <strong>${p.temperatura}°C</strong>, ${temp_desc}</p><p>Viento: <strong>${p.viento_kmh} km/h</strong>, ${viento_desc}</p>`;
+                const temp_desc = isNaN(temp) ? "dato no disponible" : temp > 30 ? "muy alta, lo que reduce drásticamente la humedad del combustible fino." : temp > 25 ? "elevada, contribuyendo al secado y precalentamiento de la vegetación." : "moderada, sin representar un factor de riesgo principal.";
+                const viento_desc = isNaN(viento) ? "dato no disponible" : viento > 30 ? "extremadamente peligroso, capaz de causar una propagación explosiva e impredecible." : viento > 20 ? "fuerte y actúa como un acelerante significativo del fuego." : "moderado y no es un factor dominante en el riesgo actual.";
+                return `<h5 class="font-bold mb-1 text-gray-700">2. Peligro Meteorológico</h5><p>La temperatura superficial es de <strong>${p.temperatura}°C</strong>, considerada ${temp_desc}</p><p>El viento promedio es de <strong>${p.viento_kmh} km/h</strong>, una velocidad ${viento_desc}</p>`;
             };
 
             const getConclusion = (p) => {
+                const nivel = p.nivel?.toUpperCase();
                 const conclusions = {
-                    'CRÍTICO': `Se recomienda <strong>alerta máxima</strong> y pre-posición de recursos.`,
-                    'ALTO': `Se recomienda <strong>vigilancia intensiva</strong> y patrullas preventivas.`,
-                    'MODERADO': `Mantener <strong>alerta y monitoreo</strong> regular.`,
-                    'BAJO': `Condiciones seguras. Continuar monitoreo.`
+                    'CRÍTICO': `Se recomienda <strong>alerta máxima</strong> y la pre-posición de recursos de respuesta rápida. Evitar cualquier actividad que pueda generar chispas es imperativo.`,
+                    'ALTO': `Se recomienda <strong>vigilancia intensiva</strong>. Las patrullas preventivas en zonas de interfaz son cruciales para la detección temprana de cualquier columna de humo.`,
+                    'MODERADO': `Mantener el estado de <strong>alerta y monitoreo</strong>. Las condiciones pueden cambiar rápidamente si el viento aumenta o la temperatura sube en los próximos días.`,
+                    'BAJO': `Las condiciones actuales son seguras. Continuar con el monitoreo regular como parte del protocolo estándar.`
                 };
-                return conclusions[p.nivel] || 'Sin recomendación específica.';
+                return conclusions[nivel] || 'No se puede generar una recomendación.';
             };
 
             ui.reportContent.innerHTML = `
                 <div class="mb-4">
                     <h3 class="text-lg font-bold">Reporte para: <span class="text-blue-600">${props.nombre.toUpperCase()}</span></h3>
-                    <p class="text-sm text-gray-500">ID: ${id} | Fecha: ${date}</p>
                 </div>
                 <div class="bg-gray-100 p-4 rounded-lg">
                     <h4 class="font-bold text-lg mb-2">Resumen Ejecutivo</h4>
@@ -333,19 +314,22 @@
                         <div class="bg-gray-50 p-3 rounded-md border">${getWeatherAnalysis(props)}</div>
                     </div>
                 </div>
-                <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded-r-lg mt-2">
+                <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded-r-lg mt-4">
                     <h4 class="font-bold">Conclusión y Recomendación</h4>
                     <p>${getConclusion(props)}</p>
                 </div>`;
             openReportModal();
         };
+        // ===============================================================================
+        // == FIN DE LA SECCIÓN DE REPORTE RESTAURADA A LA VERSIÓN COMPLETA Y DETALLADA ==
+        // ===============================================================================
 
-        const openReportModal = () => { ui.reportModalBg.classList.remove('hidden', 'opacity-0'); };
+        const openReportModal = () => { ui.reportModalBg.classList.remove('hidden'); setTimeout(() => ui.reportModalBg.classList.remove('opacity-0'), 10); };
         const closeReportModal = () => { ui.reportModalBg.classList.add('opacity-0'); setTimeout(() => ui.reportModalBg.classList.add('hidden'), 300); };
         
         const handleFilterChange = () => {
             const activeLevels = [...document.querySelectorAll('#layer-filters input[data-level]:checked')].map(cb => cb.dataset.level);
-            geoJsonLayer.eachLayer(layer => activeLevels.includes(layer.feature.properties.nivel) ? map.addLayer(layer) : map.removeLayer(layer));
+            if (geoJsonLayer) geoJsonLayer.eachLayer(layer => activeLevels.includes(layer.feature.properties.nivel) ? map.addLayer(layer) : map.removeLayer(layer));
         };
 
         document.addEventListener('DOMContentLoaded', () => {
