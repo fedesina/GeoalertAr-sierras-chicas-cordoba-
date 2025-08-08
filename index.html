@@ -99,7 +99,7 @@
             <div id="stats-summary"></div><div id="layer-filters"></div>
         </div>
         
-        <div class="p-3 border-t border-gray-200 text-xs text-gray-500"><p>�🇷 Sistema FireWatch Argentina</p><p>© 2025 Federico Nicolás Sinato</p></div>
+        <div class="p-3 border-t border-gray-200 text-xs text-gray-500"><p>🇦🇷 Sistema FireWatch Argentina</p><p>© 2025 Federico Nicolás Sinato</p></div>
     </aside>
 
     <main class="flex-1 h-full"><div id="map" class="h-full w-full bg-gray-200"></div></main>
@@ -156,7 +156,7 @@
         const loadInitialData = async () => {
             ui.statusMsg.textContent = 'Cargando datos...';
             try {
-                const response = await fetch('./data');
+                const response = await fetch('data');
                 if (!response.ok) throw new Error(`Error de red: ${response.status}`);
                 const csvText = await response.text();
                 if (!csvText) throw new Error("Archivo de datos vacío.");
@@ -274,9 +274,6 @@
 
         const createPopupContent = (props) => `<div class="text-gray-800" style="min-width:220px;"><h3 class="font-bold text-lg mb-2 border-b pb-1">${props.nombre.toUpperCase()}</h3><p><strong>Riesgo:</strong> ${props.nivel} (${parseFloat(props.riesgo_final).toFixed(1)}%)</p><hr class="my-2"><button class="w-full mt-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-1 px-2 rounded" onclick='generateReport(${JSON.stringify(props)})'>Generar Reporte</button></div>`;
         
-        // ===================================================================
-        // === INICIO DE LA CORRECCIÓN: LÓGICA DEL REPORTE DETALLADO RESTAURADA ===
-        // ===================================================================
         const generateReport = (props) => {
             const id = 'GAR-' + Date.now().toString(36).toUpperCase();
             const date = new Date().toLocaleString('es-AR');
@@ -342,9 +339,6 @@
                 </div>`;
             openReportModal();
         };
-        // =================================================================
-        // === FIN DE LA CORRECCIÓN: LÓGICA DEL REPORTE DETALLADO RESTAURADA ===
-        // =================================================================
 
         const openReportModal = () => { ui.reportModalBg.classList.remove('hidden', 'opacity-0'); };
         const closeReportModal = () => { ui.reportModalBg.classList.add('opacity-0'); setTimeout(() => ui.reportModalBg.classList.add('hidden'), 300); };
@@ -362,4 +356,3 @@
     </script>
 </body>
 </html>
-�
