@@ -1,21 +1,37 @@
-MIT License
+# LICENSE - GEOALERTAR SIERRAS CHICAS
 
-Copyright (c) 2025 fedesina
+**Copyright © 2024-2025 Federico Nicolás Sinato**
+**Todos los derechos reservados para componentes propietarios**
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+---
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+## 🔓 LICENCIA DE USO PÚBLICO - DEMO SIERRAS CHICAS
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Este software de demostración ("Demo") se proporciona para uso de los bomberos y servicios de emergencia de Sierras Chicas, Córdoba, Argentina.
+
+### PERMITIDO:
+✅ Uso gratuito para prevención de incendios
+✅ Acceso y visualización de datos públicos
+✅ Compartir resultados con autoridades competentes
+✅ Proporcionar feedback para mejoras del sistema
+
+### NO PERMITIDO:
+❌ Uso comercial sin autorización
+❌ Modificación del código fuente sin permiso
+❌ Redistribución del sistema completo
+❌ Uso de la metodología FireWatch sin atribución
+
+### COMPONENTES:
+- **Visualización (HTML/JS)**: MIT License
+- **Metodología FireWatch**: Propietaria - Federico Sinato
+- **Datos satelitales**: NASA/ESA - Dominio público
+- **Calibración regional**: Propietaria - GeoAlertAR
+
+### DISCLAIMER:
+Este sistema se proporciona "tal cual" para evaluación. 
+No se garantiza precisión absoluta. Siempre verificar con fuentes oficiales.
+
+Para uso comercial o expansión: contactar geoalertar1@gmail.com
+
+---
+FireWatch Argentina® - Sistema Nacional de Detección de Incendios
