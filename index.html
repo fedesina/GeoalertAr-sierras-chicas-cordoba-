@@ -5,13 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GeoAlertAR - Sistema de Detección de Incendios | Sierras Chicas Demo</title>
     
+    <!-- Meta tags -->
     <meta name="description" content="Sistema de detección temprana de incendios - Sierras Chicas, Córdoba">
     <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
     
+    <!-- Librerías -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
+    <!-- Estilos Personalizados y Corrección para Móviles -->
     <style>
         body { font-family: 'Inter', sans-serif; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
@@ -24,26 +27,10 @@
         .leaflet-popup-tip { background: #ffffff; }
 
         /* === CAPAS (Z-INDEX) CORREGIDAS PARA FUNCIONALIDAD MÓVIL === */
-        /* El mapa de Leaflet tiene un z-index por defecto de ~400 */
-        
-        /* Botón de menú: Debe estar por encima del mapa */
-        #mobile-menu-btn {
-            z-index: 1000;
-        }
-        /* Overlay: Aparece sobre el mapa pero debajo del sidebar */
-        #sidebar-overlay {
-            z-index: 1999;
-            transition: opacity 0.3s ease;
-        }
-        /* Sidebar: La capa más alta cuando está abierto */
-        #sidebar {
-            z-index: 2000;
-        }
-        /* Modal de reporte: La capa superior a todo lo demás */
-        #report-modal-bg {
-            z-index: 3000;
-            transition: opacity 0.3s ease;
-        }
+        #mobile-menu-btn { z-index: 1000; }
+        #sidebar-overlay { z-index: 1999; transition: opacity 0.3s ease; }
+        #sidebar { z-index: 2000; }
+        #report-modal-bg { z-index: 3000; transition: opacity 0.3s ease; }
         #report-modal-content { transition: transform 0.3s ease; }
 
         @media (max-width: 768px) {
@@ -110,7 +97,7 @@
     <div id="report-modal-bg" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden opacity-0">
         <div id="report-modal-content" class="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col transform scale-95 relative">
             <div class="watermark">GEOALERTAR</div>
-            <div class="flex justify-between items-center p-4 border-b"><h2 class="text-xl font-bold text-gray-800">📄 Reporte de Riesgo</h2><button id="close-report-btn" class="text-gray-400 hover:text-gray-600 text-3xl">&times;</button></div>
+            <div class="flex justify-between items-center p-4 border-b"><h2 class="text-xl font-bold text-gray-800">📄 Reporte de Inteligencia de Riesgo</h2><button id="close-report-btn" class="text-gray-400 hover:text-gray-600 text-3xl">&times;</button></div>
             <div class="bg-red-50 border-l-4 border-red-500 p-3 mx-4 mt-4 rounded-r"><p class="text-xs text-red-800"><strong>⚠️ CONFIDENCIAL:</strong> Propiedad de Federico Sinato. Prohibida su distribución.</p></div>
             <div id="report-content" class="p-6 overflow-y-auto text-gray-700 space-y-4 relative z-10"></div>
             <div class="p-4 border-t bg-gray-50 text-xs text-gray-600"><p class="text-center">Reporte por <strong>GeoAlertAR®</strong> | ID: <span id="report-id"></span> | <span id="report-date"></span></p></div>
@@ -140,8 +127,12 @@
         const closeMobileMenu = () => { ui.sidebar.classList.remove('open'); ui.sidebarOverlay.classList.add('opacity-0', 'pointer-events-none'); };
 
         const initMap = () => {
+            const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
             const hybridLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',{ maxZoom: 20, subdomains:['mt0','mt1','mt2','mt3'], attribution: 'Map data &copy; Google' });
             map = L.map('map', { center: [-31.07, -64.30], zoom: window.innerWidth < 768 ? 10 : 11, layers: [hybridLayer], zoomControl: window.innerWidth > 768 });
+            // FUNCIONALIDAD RESTAURADA: Control de capas
+            const baseMaps = { "Híbrido": hybridLayer, "Satélite": satelliteLayer };
+            L.control.layers(baseMaps).addTo(map);
         };
 
         const setupEventListeners = () => {
@@ -187,6 +178,7 @@
             const lines = text.trim().split(/\r?\n/);
             const headers = lines.shift().split(',').map(h => h.trim());
             return lines.map(line => {
+                if (!line) return null;
                 const values = line.split(',');
                 return headers.reduce((obj, h, i) => (obj[h] = values[i]?.trim() || '', obj), {});
             }).filter(Boolean);
@@ -237,16 +229,28 @@
         };
 
         const populateTownSelector = (data) => {
+            // FUNCIONALIDAD RESTAURADA: Obtener todos los nombres únicos
             const townNames = [...new Set(data.map(item => item.nombre))].sort();
             ui.townSelect.innerHTML = '<option value="">Seleccione...</option>' + townNames.map(name => `<option value="${name}">${name}</option>`).join('');
             ui.townSelect.disabled = false; ui.searchBtn.disabled = false;
         };
 
         const handleTownSearch = () => {
-            const target = townData.find(p => p.nombre === ui.townSelect.value);
-            if (target) {
-                map.flyTo([target.lat, target.lon], 14);
-                if (window.innerWidth < 768) closeMobileMenu();
+            // FUNCIONALIDAD RESTAURADA: Buscar el punto y abrir su popup
+            const selectedTown = ui.townSelect.value;
+            if (!selectedTown) return;
+            const targetPoint = townData.find(p => p.nombre === selectedTown);
+            if (targetPoint) {
+                const lat = parseFloat(targetPoint.lat), lon = parseFloat(targetPoint.lon);
+                if (!isNaN(lat) && !isNaN(lon)) {
+                    map.flyTo([lat, lon], 14);
+                    geoJsonLayer.eachLayer(layer => {
+                        if (layer.feature.properties.nombre === selectedTown) {
+                            layer.openPopup();
+                        }
+                    });
+                    if (window.innerWidth < 768) closeMobileMenu();
+                }
             }
         };
 
@@ -263,11 +267,18 @@
 
         const createPopupContent = (props) => `<div class="text-gray-800" style="min-width:220px;"><h3 class="font-bold text-lg mb-2 border-b pb-1">${props.nombre.toUpperCase()}</h3><p><strong>Riesgo:</strong> ${props.nivel} (${parseFloat(props.riesgo_final).toFixed(1)}%)</p><hr class="my-2"><button class="w-full mt-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-1 px-2 rounded" onclick='generateReport(${JSON.stringify(props)})'>Generar Reporte</button></div>`;
         
+        // FUNCIONALIDAD RESTAURADA: Reporte detallado
         const generateReport = (props) => {
             const id = 'GAR-' + Date.now().toString(36).toUpperCase();
             const date = new Date().toLocaleString('es-AR');
             document.getElementById('report-id').textContent = id; document.getElementById('report-date').textContent = date;
-            ui.reportContent.innerHTML = `<div class="mb-4"><h3 class="text-lg font-bold">Reporte para: <span class="text-blue-600">${props.nombre.toUpperCase()}</span></h3><p class="text-sm text-gray-500">ID: ${id} | Fecha: ${date}</p></div><div class="bg-gray-100 p-4 rounded-lg space-y-2"><p><strong>Nivel de Riesgo:</strong> ${props.nivel} (${parseFloat(props.riesgo_final).toFixed(1)}%)</p><p><strong>Población:</strong> ${parseInt(props.poblacion).toLocaleString('es-AR')}</p><p><strong>Datos Crudos:</strong> NDVI(${props.ndvi}), Precip.(${props.precipitacion_60d}mm), Temp.(${props.temperatura}°C), Viento(${props.viento_kmh}km/h)</p></div>`;
+            
+            const getExecutiveSummary = p => ({ 'CRÍTICO': `El nivel de riesgo es <strong>CRÍTICO (${p.riesgo_final}%)</strong>. La combinación de combustible extremadamente seco y condiciones meteorológicas adversas crea un escenario de peligro inminente.`, 'ALTO': `El nivel de riesgo es <strong>ALTO (${p.riesgo_final}%)</strong>. El combustible vegetal se encuentra muy seco y propenso a la ignición.`, 'MODERADO': `El nivel de riesgo es <strong>MODERADO (${p.riesgo_final}%)</strong>. Se detectan algunos factores de estrés en la vegetación.`, 'BAJO': `El nivel de riesgo es <strong>BAJO (${p.riesgo_final}%)</strong>. Las condiciones actuales son seguras.` }[p.nivel] || 'Riesgo no determinado.');
+            const getFuelAnalysis = p => `<h5 class="font-bold mb-1">1. Condición del Combustible</h5><p>NDVI: <strong>${p.ndvi}</strong> (${parseFloat(p.ndvi) < 0.3 ? "muy seco" : "húmedo"})</p><p>Precipitación 60d: <strong>${p.precipitacion_60d} mm</strong> (${parseFloat(p.precipitacion_60d) < 10 ? "sequía" : "suficiente"})</p>`;
+            const getWeatherAnalysis = p => `<h5 class="font-bold mb-1">2. Peligro Meteorológico</h5><p>Temperatura: <strong>${p.temperatura}°C</strong> (${parseFloat(p.temperatura) > 25 ? "alta" : "moderada"})</p><p>Viento: <strong>${p.viento_kmh} km/h</strong> (${parseFloat(p.viento_kmh) > 20 ? "fuerte" : "moderado"})</p>`;
+            const getConclusion = p => ({ 'CRÍTICO': `Se recomienda <strong>alerta máxima</strong> y pre-posición de recursos.`, 'ALTO': `Se recomienda <strong>vigilancia intensiva</strong> y patrullas preventivas.`, 'MODERADO': `Mantener <strong>alerta y monitoreo</strong> regular.`, 'BAJO': `Condiciones seguras. Continuar monitoreo.` }[p.nivel] || 'Sin recomendación.');
+
+            ui.reportContent.innerHTML = `<div class="mb-4"><h3 class="text-lg font-bold">Reporte para: <span class="text-blue-600">${props.nombre.toUpperCase()}</span></h3><p class="text-sm text-gray-500">ID: ${id} | Fecha: ${date}</p></div><div class="bg-gray-100 p-4 rounded-lg"><h4 class="font-bold text-lg mb-2">Resumen Ejecutivo</h4><p>${getExecutiveSummary(props)}</p></div><div><h4 class="font-bold text-lg my-2">Análisis de Componentes</h4><div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm"><div class="bg-gray-50 p-3 rounded-md border">${getFuelAnalysis(props)}</div><div class="bg-gray-50 p-3 rounded-md border">${getWeatherAnalysis(props)}</div></div></div><div class="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded-r-lg mt-2"><h4 class="font-bold">Conclusión y Recomendación</h4><p>${getConclusion(props)}</p></div>`;
             openReportModal();
         };
 
