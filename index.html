@@ -28,34 +28,23 @@
         #report-modal-bg { z-index: 5000; transition: opacity 0.3s ease; }
         #report-modal-content { transition: transform 0.3s ease; }
         
-        /* === Mejoras para Móviles === */
-        #sidebar-overlay {
-            transition: opacity 0.3s ease;
-        }
+        #sidebar-overlay { transition: opacity 0.3s ease; }
 
         @media (max-width: 768px) {
             .sidebar-mobile { 
                 transform: translateX(-100%); 
                 transition: transform 0.3s ease;
-                width: 85%; /* El sidebar no ocupará toda la pantalla */
+                width: 85%;
                 max-width: 320px;
             }
-            .sidebar-mobile.open { 
-                transform: translateX(0); 
-            }
+            .sidebar-mobile.open { transform: translateX(0); }
         }
         
-        /* Watermark para reportes */
         .watermark {
-            position: absolute;
-            top: 50%;
-            left: 50%;
+            position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 4rem;
-            color: rgba(59, 130, 246, 0.1);
-            font-weight: bold;
-            pointer-events: none;
-            z-index: 1;
+            font-size: 4rem; color: rgba(59, 130, 246, 0.1);
+            font-weight: bold; pointer-events: none; z-index: 1;
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -64,18 +53,14 @@
 <body class="bg-gray-100 text-gray-800 flex h-screen overflow-hidden">
 
     <button id="mobile-menu-btn" class="md:hidden fixed top-4 left-4 z-40 bg-white p-2 rounded-lg shadow-lg">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-        </svg>
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
     </button>
     
     <div id="sidebar-overlay" class="md:hidden fixed inset-0 bg-black bg-opacity-50 z-30 opacity-0 pointer-events-none"></div>
 
     <aside id="sidebar" class="w-80 bg-white border-r border-gray-200 flex flex-col h-full fixed md:relative sidebar-mobile z-40 md:translate-x-0">
         <button id="close-sidebar" class="md:hidden absolute top-4 right-4 text-gray-500">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
         
         <div class="p-4 border-b border-gray-200">
@@ -85,15 +70,10 @@
         </div>
         
         <div class="bg-blue-50 border-l-4 border-blue-500 p-3 mx-4 mt-4 rounded-r">
-            <p class="text-xs text-blue-800">
-                <strong>🔬 Versión Demo:</strong> Sistema en evaluación para bomberos de Sierras Chicas.
-                <a href="mailto:geoalertar1@gmail.com" class="underline">Enviar feedback</a>
-            </p>
+            <p class="text-xs text-blue-800"><strong>🔬 Versión Demo:</strong> En evaluación para bomberos de Sierras Chicas. <a href="mailto:geoalertar1@gmail.com" class="underline">Enviar feedback</a></p>
         </div>
         
-        <div class="p-4 space-y-4 border-b border-gray-200">
-            <div id="status-message" class="text-center text-sm text-gray-500 h-5">Cargando datos...</div>
-        </div>
+        <div class="p-4 space-y-4 border-b border-gray-200"><div id="status-message" class="text-center text-sm text-gray-500 h-5"></div></div>
         
         <div id="search-panel" class="p-4 space-y-2 border-b border-gray-200 hidden">
             <label for="town-select" class="block text-sm font-medium text-gray-600">Buscar Localidad</label>
@@ -104,54 +84,29 @@
         </div>
         
         <div id="results-panel" class="p-4 space-y-4 flex-grow overflow-y-auto custom-scrollbar hidden">
-            <div id="stats-summary"></div>
-            <div id="layer-filters"></div>
+            <div id="stats-summary"></div><div id="layer-filters"></div>
         </div>
         
-        <div class="p-3 border-t border-gray-200 text-xs text-gray-500">
-            <p>🇦🇷 Sistema FireWatch Argentina</p>
-            <p>© 2025 Federico Nicolás Sinato</p>
-        </div>
+        <div class="p-3 border-t border-gray-200 text-xs text-gray-500"><p>🇦🇷 Sistema FireWatch Argentina</p><p>© 2025 Federico Nicolás Sinato</p></div>
     </aside>
 
-    <main class="flex-1 h-full">
-        <div id="map" class="h-full w-full bg-gray-200"></div>
-    </main>
+    <main class="flex-1 h-full"><div id="map" class="h-full w-full bg-gray-200"></div></main>
     
     <div id="report-modal-bg" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden opacity-0 z-50">
         <div id="report-modal-content" class="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col transform scale-95 relative">
             <div class="watermark">GEOALERTAR</div>
-            
             <div class="flex justify-between items-center p-4 border-b border-gray-200">
                 <h2 class="text-xl font-bold text-gray-800">📄 Reporte de Inteligencia de Riesgo</h2>
                 <button id="close-report-btn" class="text-gray-400 hover:text-gray-600 text-3xl leading-none">&times;</button>
             </div>
-            
-            <div class="bg-red-50 border-l-4 border-red-500 p-3 mx-4 mt-4 rounded-r">
-                <p class="text-xs text-red-800">
-                    <strong>⚠️ CONFIDENCIAL:</strong> Este reporte fue generado por GeoAlertAR® y es propiedad intelectual de Federico Nicolás Sinato. 
-                    Prohibida su reproducción o distribución sin autorización expresa. Uso exclusivo para servicios de emergencia autorizados.
-                </p>
-            </div>
-            
+            <div class="bg-red-50 border-l-4 border-red-500 p-3 mx-4 mt-4 rounded-r"><p class="text-xs text-red-800"><strong>⚠️ CONFIDENCIAL:</strong> Este reporte fue generado por GeoAlertAR® y es propiedad intelectual de Federico Nicolás Sinato. Prohibida su reproducción o distribución sin autorización expresa. Uso exclusivo para servicios de emergencia autorizados.</p></div>
             <div id="report-content" class="p-6 overflow-y-auto text-gray-700 space-y-4 relative z-10"></div>
-            
-            <div class="p-4 border-t border-gray-200 bg-gray-50 text-xs text-gray-600">
-                <p class="text-center">
-                    Reporte generado por <strong>GeoAlertAR®</strong> | 
-                    ID: <span id="report-id"></span> | 
-                    <span id="report-date"></span> | 
-                    © 2025 Todos los derechos reservados
-                </p>
-            </div>
+            <div class="p-4 border-t border-gray-200 bg-gray-50 text-xs text-gray-600"><p class="text-center">Reporte generado por <strong>GeoAlertAR®</strong> | ID: <span id="report-id"></span> | <span id="report-date"></span> | © 2025 Todos los derechos reservados</p></div>
         </div>
     </div>
 
     <script>
-        let map;
-        let geoJsonLayer;
-        let townData = [];
-        let scanAreaCircles = [];
+        let map, geoJsonLayer, townData = [], scanAreaCircles = [];
         
         const ui = {
             statusMsg: document.getElementById('status-message'),
@@ -171,75 +126,55 @@
             sidebarOverlay: document.getElementById('sidebar-overlay')
         };
 
-        // === Lógica del Menú Móvil Mejorada ===
-        function openMobileMenu() {
-            ui.sidebar.classList.add('open');
-            ui.sidebarOverlay.classList.remove('opacity-0', 'pointer-events-none');
-        }
+        function openMobileMenu() { ui.sidebar.classList.add('open'); ui.sidebarOverlay.classList.remove('opacity-0', 'pointer-events-none'); }
+        function closeMobileMenu() { ui.sidebar.classList.remove('open'); ui.sidebarOverlay.classList.add('opacity-0', 'pointer-events-none'); }
 
-        function closeMobileMenu() {
-            ui.sidebar.classList.remove('open');
-            ui.sidebarOverlay.classList.add('opacity-0', 'pointer-events-none');
-        }
-
-        ui.mobileMenuBtn?.addEventListener('click', openMobileMenu);
-        ui.closeSidebar?.addEventListener('click', closeMobileMenu);
-        ui.sidebarOverlay?.addEventListener('click', closeMobileMenu);
-        
         function initMap() {
             const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
             const hybridLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',{ maxZoom: 20, subdomains:['mt0','mt1','mt2','mt3'], attribution: 'Map data &copy; Google' });
-            
-            map = L.map('map', { 
-                center: [-31.07, -64.30], 
-                zoom: window.innerWidth < 768 ? 10 : 11,
-                layers: [hybridLayer],
-                zoomControl: window.innerWidth > 768
-            });
-            
-            const baseMaps = { "Híbrido (Rutas y Nombres)": hybridLayer, "Satélite": satelliteLayer };
-            L.control.layers(baseMaps).addTo(map);
+            map = L.map('map', { center: [-31.07, -64.30], zoom: window.innerWidth < 768 ? 10 : 11, layers: [hybridLayer], zoomControl: window.innerWidth > 768 });
+            L.control.layers({ "Híbrido (Rutas y Nombres)": hybridLayer, "Satélite": satelliteLayer }).addTo(map);
         }
 
         function setupEventListeners() {
+            ui.mobileMenuBtn?.addEventListener('click', openMobileMenu);
+            ui.closeSidebar?.addEventListener('click', closeMobileMenu);
+            ui.sidebarOverlay?.addEventListener('click', closeMobileMenu);
             ui.searchBtn.addEventListener('click', handleTownSearch);
             ui.closeReportBtn.addEventListener('click', closeReportModal);
-            ui.reportModalBg.addEventListener('click', (e) => { 
-                if (e.target === ui.reportModalBg) closeReportModal(); 
-            });
+            ui.reportModalBg.addEventListener('click', (e) => { if (e.target === ui.reportModalBg) closeReportModal(); });
         }
 
-        // === Carga de Datos Automática ===
         async function loadInitialData() {
+            ui.statusMsg.textContent = 'Cargando datos de Sierras Chicas...';
             try {
-                ui.statusMsg.textContent = 'Cargando datos de Sierras Chicas...';
+                const response = await fetch('./data'); // Ruta corregida para ser más explícita
+                if (!response.ok) throw new Error(`El servidor respondió con estado ${response.status}`);
                 
-                // Corregido: Apunta al archivo 'data' en tu repositorio
-                const response = await fetch('data'); 
-                
-                if (response.ok) {
-                    const csvText = await response.text();
-                    processCSVData(csvText, 'Sierras Chicas');
-                } else {
-                    ui.statusMsg.innerHTML = `<span class="text-red-600 font-bold">❌ Error al cargar datos.</span>`;
-                }
+                const csvText = await response.text();
+                if (!csvText) throw new Error("El archivo de datos está vacío.");
+
+                processCSVData(csvText, 'Sierras Chicas');
             } catch (error) {
-                console.error("Error al cargar datos:", error);
-                ui.statusMsg.innerHTML = `<span class="text-red-600 font-bold">❌ No se pudo conectar.</span>`;
+                console.error("Error crítico al cargar datos:", error);
+                ui.statusMsg.innerHTML = `<span class="text-red-600 font-bold">❌ Error al cargar datos.</span>`;
             }
         }
         
         function processCSVData(csvText, regionName) {
             try {
+                console.log("Iniciando procesamiento de CSV...");
                 const jsonData = parseCSV(csvText);
-                if (jsonData.length === 0) {
-                    throw new Error("El archivo CSV está vacío o tiene un formato incorrecto.");
-                }
+                console.log(`CSV parseado. ${jsonData.length} filas de datos encontradas.`);
+                
+                if (jsonData.length === 0) throw new Error("CSV vacío o en formato incorrecto.");
                 townData = jsonData;
                 
                 const geojsonData = convertToGeoJSON(jsonData);
-                const summary = calculateSummary(jsonData);
+                console.log(`Convertido a GeoJSON. ${geojsonData.features.length} features creadas.`);
+                if (geojsonData.features.length === 0) throw new Error("No se generaron puntos. Verifique coordenadas.");
 
+                const summary = calculateSummary(jsonData);
                 renderMapData(geojsonData);
                 updateSidebar(summary);
                 populateTownSelector(jsonData);
@@ -261,51 +196,51 @@
             return lines.slice(1).map(line => {
                 if (!line) return null;
                 const values = line.split(',');
-                const entry = {};
-                headers.forEach((header, index) => { 
-                    entry[header] = values[index] ? values[index].trim() : ''; 
-                });
-                return entry;
+                return headers.reduce((entry, header, index) => {
+                    entry[header] = values[index] ? values[index].trim() : '';
+                    return entry;
+                }, {});
             }).filter(Boolean);
         }
 
         function convertToGeoJSON(jsonData) {
-            const features = jsonData.map((row, index) => {
-                const lat = parseFloat(row.lat);
-                const lon = parseFloat(row.lon);
-                if (isNaN(lat) || isNaN(lon)) {
-                    console.warn(`Dato inválido en fila ${index + 2}, se omitirá el punto.`);
-                    return null;
-                }
-                return {
-                    type: "Feature",
-                    geometry: { type: "Point", coordinates: [lon, lat] },
-                    properties: {
-                        nombre: row.ciudad ? row.ciudad.replace(/_/g, ' ') : 'Punto de Análisis',
-                        riesgo_final: parseFloat(row.riesgo_final) || 0,
-                        nivel: row.nivel || 'INDEFINIDO',
-                        poblacion: parseInt(row.poblacion) || 0,
-                        region_detectada: row.region_detectada ? row.region_detectada.replace(/_/g, ' ') : 'S/D',
-                        zona_tipo: row.zona_tipo ? row.zona_tipo.replace(/_/g, ' ') : 'S/D',
-                        ndvi: row.ndvi || 'S/D',
-                        precipitacion_60d: row.precipitacion_60d || 'S/D',
-                        temperatura: row.temperatura || 'S/D',
-                        viento_kmh: row.viento_kmh || 'S/D'
+            return {
+                type: "FeatureCollection",
+                features: jsonData.map((row, index) => {
+                    const lat = parseFloat(row.lat);
+                    const lon = parseFloat(row.lon);
+                    if (isNaN(lat) || isNaN(lon)) {
+                        console.warn(`Dato inválido en fila ${index + 2}, se omitirá el punto.`);
+                        return null;
                     }
-                };
-            }).filter(Boolean); // Filtra los puntos nulos por coordenadas inválidas
-            return { type: "FeatureCollection", features };
+                    return {
+                        type: "Feature",
+                        geometry: { type: "Point", coordinates: [lon, lat] },
+                        properties: {
+                            nombre: row.ciudad?.replace(/_/g, ' ') || 'Punto de Análisis',
+                            riesgo_final: parseFloat(row.riesgo_final) || 0,
+                            nivel: row.nivel || 'INDEFINIDO',
+                            poblacion: parseInt(row.poblacion) || 0,
+                            region_detectada: row.region_detectada?.replace(/_/g, ' ') || 'S/D',
+                            zona_tipo: row.zona_tipo?.replace(/_/g, ' ') || 'S/D',
+                            ndvi: row.ndvi || 'S/D', precipitacion_60d: row.precipitacion_60d || 'S/D',
+                            temperatura: row.temperatura || 'S/D', viento_kmh: row.viento_kmh || 'S/D'
+                        }
+                    };
+                }).filter(Boolean)
+            };
         }
         
         function calculateSummary(jsonData) {
-            const summary = { totalPuntos: jsonData.length, critico: 0, alto: 0, moderado: 0, bajo: 0 };
-            jsonData.forEach(row => {
-                if (row.nivel === 'CRÍTICO') summary.critico++;
-                else if (row.nivel === 'ALTO') summary.alto++;
-                else if (row.nivel === 'MODERADO') summary.moderado++;
-                else if (row.nivel === 'BAJO') summary.bajo++;
-            });
-            return summary;
+            return jsonData.reduce((summary, row) => {
+                summary.totalPuntos++;
+                const nivel = row.nivel?.toUpperCase();
+                if (nivel === 'CRÍTICO') summary.critico++;
+                else if (nivel === 'ALTO') summary.alto++;
+                else if (nivel === 'MODERADO') summary.moderado++;
+                else if (nivel === 'BAJO') summary.bajo++;
+                return summary;
+            }, { totalPuntos: 0, critico: 0, alto: 0, moderado: 0, bajo: 0 });
         }
 
         function renderMapData(geojsonData) {
@@ -315,75 +250,27 @@
 
             geoJsonLayer = L.geoJSON(geojsonData, {
                 pointToLayer: (feature, latlng) => {
-                    const areaCircle = L.circle(latlng, { 
-                        radius: 1000, color: '#ffffff', weight: 1, opacity: 0.3, fillColor: '#ffffff', fillOpacity: 0.05 
-                    });
-                    scanAreaCircles.push(areaCircle);
-
-                    return L.marker(latlng, { 
-                        icon: L.divIcon({
-                            html: createMarkerIcon(feature.properties.nivel),
-                            className: 'leaflet-div-icon', 
-                            iconSize: [32, 42], iconAnchor: [16, 42], popupAnchor: [0, -42]
-                        })
-                    });
+                    scanAreaCircles.push(L.circle(latlng, { radius: 1000, color: '#fff', weight: 1, opacity: 0.3, fillOpacity: 0.05 }));
+                    return L.marker(latlng, { icon: L.divIcon({ html: createMarkerIcon(feature.properties.nivel), className: 'leaflet-div-icon', iconSize: [32, 42], iconAnchor: [16, 42], popupAnchor: [0, -42] }) });
                 },
                 onEachFeature: (feature, layer) => layer.bindPopup(createPopupContent(feature.properties))
             }).addTo(map);
             
-            if (geojsonData.features.length > 0) {
-                map.fitBounds(geoJsonLayer.getBounds().pad(0.1));
-            }
+            if (geojsonData.features.length > 0) map.fitBounds(geoJsonLayer.getBounds().pad(0.1));
         }
 
         function updateSidebar(summary) {
-            ui.statsSummary.innerHTML = `
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">Resumen de Riesgo</h3>
-                <div class="bg-gray-50 p-3 rounded-lg space-y-2 text-sm border border-gray-200">
-                    <div class="flex justify-between"><span>Puntos Analizados:</span><span class="font-semibold text-gray-900">${summary.totalPuntos}</span></div><hr class="border-gray-200 my-2">
-                    <div class="flex justify-between text-red-600"><span>🔴 Crítico:</span><span class="font-semibold">${summary.critico}</span></div>
-                    <div class="flex justify-between text-orange-500"><span>🟠 Alto:</span><span class="font-semibold">${summary.alto}</span></div>
-                    <div class="flex justify-between text-yellow-500"><span>🟡 Moderado:</span><span class="font-semibold">${summary.moderado}</span></div>
-                    <div class="flex justify-between text-green-600"><span>🟢 Bajo:</span><span class="font-semibold">${summary.bajo}</span></div>
-                </div>
-                <div class="mt-3 text-xs text-gray-500"><p>📅 Última actualización: ${new Date().toLocaleDateString('es-AR')}</p></div>`;
-            
-            const riskLevels = [
-                { id: 'critico', name: 'Crítico', color: 'text-red-600' }, { id: 'alto', name: 'Alto', color: 'text-orange-500' },
-                { id: 'moderado', name: 'Moderado', color: 'text-yellow-500' }, { id: 'bajo', name: 'Bajo', color: 'text-green-600' }
-            ];
-            
-            ui.layerFilters.innerHTML = `
-                <h3 class="text-lg font-semibold text-gray-900 mb-2 mt-4">Filtros de Capas</h3>
-                <div class="space-y-2 text-sm">
-                    ${riskLevels.map(level => `
-                        <label for="filter-${level.id}" class="flex items-center space-x-3 cursor-pointer p-1 rounded-md hover:bg-gray-100">
-                            <input type="checkbox" id="filter-${level.id}" data-level="${level.name.toUpperCase()}" checked class="bg-gray-200 border-gray-300 rounded text-blue-600 focus:ring-blue-500 h-4 w-4">
-                            <span class="font-medium ${level.color}">${level.name}</span>
-                        </label>`).join('')}
-                    <hr class="my-2 border-gray-200">
-                    <label for="filter-area" class="flex items-center space-x-3 cursor-pointer p-1 rounded-md hover:bg-gray-100">
-                        <input type="checkbox" id="filter-area" class="bg-gray-200 border-gray-300 rounded text-blue-600 focus:ring-blue-500 h-4 w-4">
-                        <span class="font-medium text-gray-700">🛰️ Mostrar Área de Análisis</span>
-                    </label>
-                </div>`;
-            
-            document.querySelectorAll('#layer-filters input[type="checkbox"]').forEach(checkbox => {
-                checkbox.addEventListener('change', checkbox.id === 'filter-area' ? toggleScanArea : handleFilterChange);
-            });
+            ui.statsSummary.innerHTML = `<h3 class="text-lg font-semibold text-gray-900 mb-2">Resumen de Riesgo</h3><div class="bg-gray-50 p-3 rounded-lg space-y-2 text-sm border border-gray-200"><div class="flex justify-between"><span>Puntos Analizados:</span><span class="font-semibold text-gray-900">${summary.totalPuntos}</span></div><hr class="border-gray-200 my-2"><div class="flex justify-between text-red-600"><span>🔴 Crítico:</span><span class="font-semibold">${summary.critico}</span></div><div class="flex justify-between text-orange-500"><span>🟠 Alto:</span><span class="font-semibold">${summary.alto}</span></div><div class="flex justify-between text-yellow-500"><span>🟡 Moderado:</span><span class="font-semibold">${summary.moderado}</span></div><div class="flex justify-between text-green-600"><span>🟢 Bajo:</span><span class="font-semibold">${summary.bajo}</span></div></div><div class="mt-3 text-xs text-gray-500"><p>📅 Última actualización: ${new Date().toLocaleDateString('es-AR')}</p></div>`;
+            const riskLevels = [{ id: 'critico', name: 'Crítico', color: 'text-red-600' }, { id: 'alto', name: 'Alto', color: 'text-orange-500' }, { id: 'moderado', name: 'Moderado', color: 'text-yellow-500' }, { id: 'bajo', name: 'Bajo', color: 'text-green-600' }];
+            ui.layerFilters.innerHTML = `<h3 class="text-lg font-semibold text-gray-900 mb-2 mt-4">Filtros de Capas</h3><div class="space-y-2 text-sm">${riskLevels.map(l => `<label for="filter-${l.id}" class="flex items-center space-x-3 cursor-pointer p-1 rounded-md hover:bg-gray-100"><input type="checkbox" id="filter-${l.id}" data-level="${l.name.toUpperCase()}" checked class="bg-gray-200 border-gray-300 rounded text-blue-600 focus:ring-blue-500 h-4 w-4"><span class="font-medium ${l.color}">${l.name}</span></label>`).join('')}<hr class="my-2 border-gray-200"><label for="filter-area" class="flex items-center space-x-3 cursor-pointer p-1 rounded-md hover:bg-gray-100"><input type="checkbox" id="filter-area" class="bg-gray-200 border-gray-300 rounded text-blue-600 focus:ring-blue-500 h-4 w-4"><span class="font-medium text-gray-700">🛰️ Mostrar Área de Análisis</span></label></div>`;
+            document.querySelectorAll('#layer-filters input[type="checkbox"]').forEach(cb => cb.addEventListener('change', cb.id === 'filter-area' ? toggleScanArea : handleFilterChange));
         }
 
         function populateTownSelector(jsonData) {
             const townNames = [...new Set(jsonData.map(item => item.ciudad.replace(/_/g, ' ')))].sort();
             ui.townSelect.innerHTML = '<option value="">Seleccione una localidad...</option>';
-            townNames.forEach(name => {
-                const option = document.createElement('option');
-                option.value = name;
-                option.textContent = name;
-                ui.townSelect.appendChild(option);
-            });
-            ui.townSelect.disabled = false;
-            ui.searchBtn.disabled = false;
+            townNames.forEach(name => { ui.townSelect.innerHTML += `<option value="${name}">${name}</option>`; });
+            ui.townSelect.disabled = false; ui.searchBtn.disabled = false;
         }
 
         function handleTownSearch() {
@@ -391,125 +278,47 @@
             if (!selectedTown) return;
             const targetPoint = townData.find(p => p.ciudad.replace(/_/g, ' ') === selectedTown);
             if (targetPoint) {
-                const lat = parseFloat(targetPoint.lat);
-                const lon = parseFloat(targetPoint.lon);
+                const lat = parseFloat(targetPoint.lat), lon = parseFloat(targetPoint.lon);
                 if (!isNaN(lat) && !isNaN(lon)) {
                     map.flyTo([lat, lon], 14);
-                    geoJsonLayer.eachLayer(layer => {
-                        if (layer.feature.geometry.coordinates[0] === lon && layer.feature.geometry.coordinates[1] === lat) {
-                            layer.openPopup();
-                        }
-                    });
+                    geoJsonLayer.eachLayer(layer => { if (layer.feature.geometry.coordinates[0] === lon && layer.feature.geometry.coordinates[1] === lat) layer.openPopup(); });
                     if (window.innerWidth < 768) closeMobileMenu();
                 }
             }
         }
 
         function toggleScanArea() {
-            const showArea = document.getElementById('filter-area').checked;
-            scanAreaCircles.forEach(circle => {
-                if (showArea) map.addLayer(circle); else map.removeLayer(circle);
-            });
+            const show = document.getElementById('filter-area').checked;
+            scanAreaCircles.forEach(c => show ? map.addLayer(c) : map.removeLayer(c));
         }
 
         function createMarkerIcon(nivel) {
             const colors = { 'CRÍTICO': '#ef4444', 'ALTO': '#f97316', 'MODERADO': '#eab308', 'BAJO': '#22c55e' };
             const color = colors[nivel] || '#6b7280';
-            return `<div class="${nivel === 'CRÍTICO' ? 'pulse' : ''}" style="width: 32px; height: 42px;">
-                <svg viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));">
-                    <path d="M16 0C7.16344 0 0 7.16344 0 16C0 28 16 42 16 42C16 42 32 28 32 16C32 7.16344 24.8366 0 16 0Z" fill="${color}"/>
-                    <circle cx="16" cy="16" r="7" fill="white"/>
-                </svg>
-            </div>`;
+            return `<div class="${nivel === 'CRÍTICO' ? 'pulse' : ''}" style="width:32px;height:42px;"><svg viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 4px 6px rgba(0,0,0,0.3));"><path d="M16 0C7.16344 0 0 7.16344 0 16C0 28 16 42 16 42C16 42 32 28 32 16C32 7.16344 24.8366 0 16 0Z" fill="${color}"/><circle cx="16" cy="16" r="7" fill="white"/></svg></div>`;
         }
 
         function createPopupContent(props) {
-            const riesgoFinal = props.riesgo_final ? props.riesgo_final.toFixed(1) : 'N/A';
-            const poblacion = props.poblacion ? parseInt(props.poblacion).toLocaleString('es-AR') : 'N/A';
-            const nivelColor = props.nivel === 'CRÍTICO' ? 'text-red-600' : 
-                               props.nivel === 'ALTO' ? 'text-orange-500' : 
-                               props.nivel === 'MODERADO' ? 'text-yellow-500' : 'text-green-600';
-            
-            return `
-                <div class="text-gray-800" style="min-width: 230px;">
-                    <h3 class="font-bold text-lg mb-2 border-b border-gray-200 pb-1 text-gray-900">${props.nombre.toUpperCase()}</h3>
-                    <div class="space-y-1 text-sm">
-                        <p><strong class="${nivelColor} text-base">${props.nivel}</strong> (${riesgoFinal}%)</p>
-                        <p><strong>Población Afectada:</strong> ${poblacion}</p>
-                        <p><strong>Tipo de Zona:</strong> ${props.zona_tipo}</p>
-                    </div>
-                    <hr class="my-2 border-gray-200">
-                    <div class="text-xs text-gray-500">
-                        <p><strong>NDVI:</strong> ${props.ndvi}</p>
-                        <p><strong>Precip (60d):</strong> ${props.precipitacion_60d} mm</p>
-                        <p><strong>Temp:</strong> ${props.temperatura} °C</p>
-                        <p><strong>Viento:</strong> ${props.viento_kmh} km/h</p>
-                    </div>
-                    <button class="w-full mt-3 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-1 px-2 rounded" 
-                        onclick='generateReport(${JSON.stringify(props).replace(/'/g, "\\'")})'>
-                        Generar Reporte de Inteligencia
-                    </button>
-                </div>`;
+            const nivelColor = { 'CRÍTICO': 'text-red-600', 'ALTO': 'text-orange-500', 'MODERADO': 'text-yellow-500', 'BAJO': 'text-green-600' }[props.nivel] || 'text-gray-600';
+            return `<div class="text-gray-800" style="min-width:230px;"><h3 class="font-bold text-lg mb-2 border-b border-gray-200 pb-1 text-gray-900">${props.nombre.toUpperCase()}</h3><div class="space-y-1 text-sm"><p><strong class="${nivelColor} text-base">${props.nivel}</strong> (${props.riesgo_final.toFixed(1)}%)</p><p><strong>Población:</strong> ${props.poblacion.toLocaleString('es-AR')}</p><p><strong>Tipo:</strong> ${props.zona_tipo}</p></div><hr class="my-2 border-gray-200"><div class="text-xs text-gray-500"><p><strong>NDVI:</strong> ${props.ndvi}</p><p><strong>Precip (60d):</strong> ${props.precipitacion_60d} mm</p><p><strong>Temp:</strong> ${props.temperatura} °C</p><p><strong>Viento:</strong> ${props.viento_kmh} km/h</p></div><button class="w-full mt-3 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-1 px-2 rounded" onclick='generateReport(${JSON.stringify(props).replace(/'/g, "\\'")})'>Generar Reporte</button></div>`;
         }
         
         function generateReport(props) {
             const reportId = 'GAR-' + Date.now().toString(36).toUpperCase();
             const reportDate = new Date().toLocaleString('es-AR');
-            document.getElementById('report-id').textContent = reportId;
-            document.getElementById('report-date').textContent = reportDate;
-            
-            ui.reportContent.innerHTML = `
-                <div class="mb-4">
-                    <h3 class="text-lg font-bold">Reporte para: <span class="text-blue-600">${props.nombre.toUpperCase()}</span></h3>
-                    <p class="text-sm text-gray-500">ID Reporte: ${reportId}</p>
-                    <p class="text-sm text-gray-500">Fecha de Análisis: ${reportDate}</p>
-                </div>
-                <div class="bg-gray-100 p-4 rounded-lg"><h4 class="font-bold text-lg mb-2">Resumen Ejecutivo</h4><p>${getExecutiveSummary(props)}</p></div>
-                <div><h4 class="font-bold text-lg my-2">Análisis de Componentes</h4><div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div class="bg-gray-50 p-3 rounded-md border">${getFuelAnalysis(props)}</div>
-                    <div class="bg-gray-50 p-3 rounded-md border">${getWeatherAnalysis(props)}</div>
-                </div></div>
-                <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded-r-lg mt-2"><h4 class="font-bold">Conclusión y Recomendación</h4><p>${getConclusion(props)}</p></div>
-                <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded"><p class="text-xs text-yellow-800"><strong>⚠️ Nota Legal:</strong> Este reporte es generado automáticamente por GeoAlertAR® basado en datos satelitales. La información debe ser verificada con fuentes oficiales antes de tomar decisiones operativas.</p></div>`;
-            
+            document.getElementById('report-id').textContent = reportId; document.getElementById('report-date').textContent = reportDate;
+            const getExecutiveSummary = p => ({ 'CRÍTICO': `El nivel de riesgo es <strong>CRÍTICO (${p.riesgo_final.toFixed(1)}%)</strong>. La combinación de combustible seco y meteorología adversa crea un peligro inminente.`, 'ALTO': `El nivel de riesgo es <strong>ALTO (${p.riesgo_final.toFixed(1)}%)</strong>. El combustible vegetal está muy seco y propenso a la ignición.`, 'MODERADO': `El nivel de riesgo es <strong>MODERADO (${p.riesgo_final.toFixed(1)}%)</strong>. Se detectan factores de estrés en la vegetación.`, 'BAJO': `El nivel de riesgo es <strong>BAJO (${p.riesgo_final.toFixed(1)}%)</strong>. Las condiciones actuales son seguras.` }[p.nivel] || 'Riesgo no determinado.');
+            const getFuelAnalysis = p => `<h5 class="font-bold mb-1">1. Condición del Combustible</h5><p>NDVI: <strong>${p.ndvi}</strong> (${parseFloat(p.ndvi) < 0.3 ? "muy seco" : "húmedo"})</p><p>Precipitación 60d: <strong>${p.precipitacion_60d} mm</strong> (${parseFloat(p.precipitacion_60d) < 10 ? "sequía" : "suficiente"})</p>`;
+            const getWeatherAnalysis = p => `<h5 class="font-bold mb-1">2. Peligro Meteorológico</h5><p>Temperatura: <strong>${p.temperatura}°C</strong> (${parseFloat(p.temperatura) > 25 ? "alta" : "moderada"})</p><p>Viento: <strong>${p.viento_kmh} km/h</strong> (${parseFloat(p.viento_kmh) > 20 ? "fuerte" : "moderado"})</p>`;
+            const getConclusion = p => ({ 'CRÍTICO': `Se recomienda <strong>alerta máxima</strong> y pre-posición de recursos.`, 'ALTO': `Se recomienda <strong>vigilancia intensiva</strong> y patrullas preventivas.`, 'MODERADO': `Mantener <strong>alerta y monitoreo</strong> regular.`, 'BAJO': `Condiciones seguras. Continuar monitoreo.` }[p.nivel] || 'Sin recomendación.');
+            ui.reportContent.innerHTML = `<div class="mb-4"><h3 class="text-lg font-bold">Reporte para: <span class="text-blue-600">${props.nombre.toUpperCase()}</span></h3><p class="text-sm text-gray-500">ID: ${reportId} | Fecha: ${reportDate}</p></div><div class="bg-gray-100 p-4 rounded-lg"><h4 class="font-bold text-lg mb-2">Resumen Ejecutivo</h4><p>${getExecutiveSummary(props)}</p></div><div><h4 class="font-bold text-lg my-2">Análisis de Componentes</h4><div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm"><div class="bg-gray-50 p-3 rounded-md border">${getFuelAnalysis(props)}</div><div class="bg-gray-50 p-3 rounded-md border">${getWeatherAnalysis(props)}</div></div></div><div class="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded-r-lg mt-2"><h4 class="font-bold">Conclusión y Recomendación</h4><p>${getConclusion(props)}</p></div><div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded"><p class="text-xs text-yellow-800"><strong>⚠️ Nota Legal:</strong> Reporte generado automáticamente por GeoAlertAR®. Verificar con fuentes oficiales antes de tomar decisiones operativas.</p></div>`;
             openReportModal();
-        }
-
-        function getExecutiveSummary(props) {
-            const riesgo = props.riesgo_final ? `(${props.riesgo_final.toFixed(1)}%)` : '';
-            if (props.nivel === 'CRÍTICO') return `El nivel de riesgo es <strong>CRÍTICO ${riesgo}</strong>. La combinación de combustible extremadamente seco y condiciones meteorológicas adversas crea un escenario de peligro inminente.`;
-            if (props.nivel === 'ALTO') return `El nivel de riesgo es <strong>ALTO ${riesgo}</strong>. El combustible vegetal se encuentra muy seco y propenso a la ignición.`;
-            if (props.nivel === 'MODERADO') return `El nivel de riesgo es <strong>MODERADO ${riesgo}</strong>. Se detectan algunos factores de estrés en la vegetación.`;
-            return `El nivel de riesgo es <strong>BAJO ${riesgo}</strong>. Las condiciones actuales son seguras.`;
-        }
-
-        function getFuelAnalysis(props) {
-            let ndvi_desc = parseFloat(props.ndvi) < 0.3 ? "extremadamente bajo, vegetación muy seca." : parseFloat(props.ndvi) < 0.5 ? "bajo, indicando estrés hídrico." : "saludable, buena humedad.";
-            let precip_desc = parseFloat(props.precipitacion_60d) < 10 ? "casi nula, sequía profunda." : parseFloat(props.precipitacion_60d) < 50 ? "muy escasa." : "suficiente.";
-            return `<h5 class="font-bold mb-1">1. Condición del Combustible</h5><p>NDVI: <strong>${props.ndvi}</strong>, ${ndvi_desc}</p><p>Precipitación 60d: <strong>${props.precipitacion_60d} mm</strong>, ${precip_desc}</p>`;
-        }
-
-        function getWeatherAnalysis(props) {
-            let temp_desc = parseFloat(props.temperatura) > 30 ? "muy alta, riesgo crítico." : parseFloat(props.temperatura) > 25 ? "elevada." : "moderada.";
-            let viento_desc = parseFloat(props.viento_kmh) > 30 ? "extremadamente peligroso." : parseFloat(props.viento_kmh) > 20 ? "fuerte, acelerante." : "moderado.";
-            return `<h5 class="font-bold mb-1">2. Peligro Meteorológico</h5><p>Temperatura: <strong>${props.temperatura}°C</strong>, ${temp_desc}</p><p>Viento: <strong>${props.viento_kmh} km/h</strong>, ${viento_desc}</p>`;
-        }
-
-        function getConclusion(props) {
-            if (props.nivel === 'CRÍTICO') return `Se recomienda <strong>alerta máxima</strong> y pre-posición de recursos.`;
-            if (props.nivel === 'ALTO') return `Se recomienda <strong>vigilancia intensiva</strong> y patrullas preventivas.`;
-            if (props.nivel === 'MODERADO') return `Mantener <strong>alerta y monitoreo</strong> regular.`;
-            return `Condiciones seguras. Continuar monitoreo regular.`;
         }
 
         function openReportModal() {
             ui.reportModalBg.classList.remove('hidden');
-            setTimeout(() => {
-                ui.reportModalBg.classList.remove('opacity-0');
-                ui.reportModalContent.classList.remove('scale-95');
-            }, 10);
+            setTimeout(() => { ui.reportModalBg.classList.remove('opacity-0'); ui.reportModalContent.classList.remove('scale-95'); }, 10);
         }
-
         function closeReportModal() {
             ui.reportModalBg.classList.add('opacity-0');
             ui.reportModalContent.classList.add('scale-95');
@@ -517,24 +326,17 @@
         }
         
         function handleFilterChange() {
-            const activeLevels = [];
-            document.querySelectorAll('#layer-filters input[type="checkbox"]:checked').forEach(checkbox => {
-                if(checkbox.dataset.level) activeLevels.push(checkbox.dataset.level);
-            });
+            const activeLevels = [...document.querySelectorAll('#layer-filters input[data-level]:checked')].map(cb => cb.dataset.level);
             geoJsonLayer.eachLayer(layer => {
-                if (activeLevels.includes(layer.feature.properties.nivel)) {
-                    map.addLayer(layer);
-                } else {
-                    map.removeLayer(layer);
-                }
+                if (activeLevels.includes(layer.feature.properties.nivel)) map.addLayer(layer);
+                else map.removeLayer(layer);
             });
         }
 
-        // === Inicialización de la Aplicación ===
         document.addEventListener('DOMContentLoaded', () => {
             initMap();
             setupEventListeners();
-            loadInitialData(); // Carga los datos al iniciar
+            loadInitialData();
         });
     </script>
 </body>
