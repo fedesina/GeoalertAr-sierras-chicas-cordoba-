@@ -91,6 +91,11 @@
             <div class="bg-red-50 border-l-4 border-red-500 p-3 mx-4 mt-4 rounded-r">
                 <p class="text-xs text-red-800"><strong>⚠️ CONFIDENCIAL:</strong> Propiedad de GeoAlertAR. Prohibida su distribución.</p>
             </div>
+            
+            <!-- NUEVO: Banner de Validez Predictiva -->
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-3 mx-4 mt-2 rounded-r">
+                <p class="text-xs text-blue-800"><strong>ℹ️ Validez Predictiva:</strong> El análisis de riesgo es una proyección con vigencia para los próximos 7 días.</p>
+            </div>
 
             <div id="report-content" class="p-6 overflow-y-auto text-gray-700 space-y-4 relative z-10"></div>
             <div class="p-4 border-t bg-gray-50 text-xs text-gray-600"><p class="text-center">Reporte por <strong>GeoAlertAR®</strong> | ID: <span id="report-id"></span> | <span id="report-date"></span></p></div>
@@ -153,6 +158,12 @@
         const processCSVData = (csvText) => {
             try {
                 townData = parseCSV(csvText);
+                
+                // CORRECCIÓN: Añadimos la propiedad 'nombre' formateada a cada fila de datos.
+                townData.forEach(row => {
+                    row.nombre = row.ciudad?.replace(/_/g, ' ') || 'Punto de Análisis';
+                });
+
                 const geojsonData = convertToGeoJSON(townData);
                 const summary = calculateSummary(townData);
                 renderMapData(geojsonData);
@@ -184,7 +195,7 @@
                 return {
                     type: "Feature",
                     geometry: { type: "Point", coordinates: [lon, lat] },
-                    properties: { ...row, nombre: row.ciudad?.replace(/_/g, ' ') || 'Punto' }
+                    properties: { ...row } // 'nombre' ya está incluido aquí
                 };
             }).filter(Boolean)
         });
@@ -229,13 +240,17 @@
         const handleTownSearch = () => {
             const selectedTown = ui.townSelect.value;
             if (!selectedTown) return;
+            // CORRECCIÓN: Buscamos en 'townData' que ahora tiene la propiedad 'nombre'.
             const targetPoint = townData.find(p => p.nombre === selectedTown);
             if (targetPoint) {
                 const lat = parseFloat(targetPoint.lat), lon = parseFloat(targetPoint.lon);
                 if (!isNaN(lat) && !isNaN(lon)) {
                     map.flyTo([lat, lon], 14);
                     geoJsonLayer.eachLayer(layer => {
-                        if (layer.feature.properties.nombre === selectedTown) layer.openPopup();
+                        // CORRECCIÓN: La comparación ahora es directa y confiable.
+                        if (layer.feature.properties.nombre === selectedTown) {
+                            layer.openPopup();
+                        }
                     });
                     if (window.innerWidth < 768) closeMobileMenu();
                 }
@@ -253,9 +268,6 @@
             return `<div class="${nivel?.toUpperCase() === 'CRÍTICO' ? 'pulse' : ''}" style="width:32px;height:42px;"><svg viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 4px 6px rgba(0,0,0,0.3));"><path d="M16 0C7.16344 0 0 7.16344 0 16C0 28 16 42 16 42C16 42 32 28 32 16C32 7.16344 24.8366 0 16 0Z" fill="${color}"/><circle cx="16" cy="16" r="7" fill="white"/></svg></div>`;
         };
         
-        // =================================================================================
-        // == INICIO DE LA SECCIÓN RESTAURADA (POPUP Y REPORTE) ==
-        // =================================================================================
         const createPopupContent = (props) => {
             const poblacion = props.poblacion ? parseInt(props.poblacion).toLocaleString('es-AR') : 'N/A';
             const riesgo = props.riesgo_final ? parseFloat(props.riesgo_final).toFixed(1) : 'N/A';
@@ -348,9 +360,6 @@
                 </div>`;
             openReportModal();
         };
-        // =================================================================================
-        // == FIN DE LA SECCIÓN RESTAURADA ==
-        // =================================================================================
 
         const openReportModal = () => { ui.reportModalBg.classList.remove('hidden'); setTimeout(() => ui.reportModalBg.classList.remove('opacity-0'), 10); };
         const closeReportModal = () => { ui.reportModalBg.classList.add('opacity-0'); setTimeout(() => ui.reportModalBg.classList.add('hidden'), 300); };
