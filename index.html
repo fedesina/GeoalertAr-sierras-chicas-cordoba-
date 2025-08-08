@@ -92,7 +92,6 @@
                 <p class="text-xs text-red-800"><strong>⚠️ CONFIDENCIAL:</strong> Propiedad de GeoAlertAR. Prohibida su distribución.</p>
             </div>
             
-            <!-- NUEVO: Banner de Validez Predictiva -->
             <div class="bg-blue-50 border-l-4 border-blue-500 p-3 mx-4 mt-2 rounded-r">
                 <p class="text-xs text-blue-800"><strong>ℹ️ Validez Predictiva:</strong> El análisis de riesgo es una proyección con vigencia para los próximos 7 días.</p>
             </div>
@@ -158,9 +157,8 @@
         const processCSVData = (csvText) => {
             try {
                 townData = parseCSV(csvText);
-                
-                // CORRECCIÓN: Añadimos la propiedad 'nombre' formateada a cada fila de datos.
-                townData.forEach(row => {
+                townData.forEach((row, index) => {
+                    row.uniqueId = `${row.ciudad}-${index}`; // ID único para cada punto
                     row.nombre = row.ciudad?.replace(/_/g, ' ') || 'Punto de Análisis';
                 });
 
@@ -195,7 +193,7 @@
                 return {
                     type: "Feature",
                     geometry: { type: "Point", coordinates: [lon, lat] },
-                    properties: { ...row } // 'nombre' ya está incluido aquí
+                    properties: { ...row }
                 };
             }).filter(Boolean)
         });
@@ -232,23 +230,22 @@
         };
 
         const populateTownSelector = (data) => {
-            const townNames = [...new Set(data.map(item => item.nombre))].sort();
-            ui.townSelect.innerHTML = '<option value="">Seleccione...</option>' + townNames.map(name => `<option value="${name}">${name}</option>`).join('');
+            // CORRECCIÓN: Usamos el 'uniqueId' para el valor de la opción, y 'nombre' para el texto visible.
+            ui.townSelect.innerHTML = '<option value="">Seleccione...</option>' + data.map(item => `<option value="${item.uniqueId}">${item.nombre}</option>`).sort((a, b) => a.localeCompare(b)).join('');
             ui.townSelect.disabled = false; ui.searchBtn.disabled = false;
         };
 
         const handleTownSearch = () => {
-            const selectedTown = ui.townSelect.value;
-            if (!selectedTown) return;
-            // CORRECCIÓN: Buscamos en 'townData' que ahora tiene la propiedad 'nombre'.
-            const targetPoint = townData.find(p => p.nombre === selectedTown);
+            const selectedId = ui.townSelect.value;
+            if (!selectedId) return;
+            // CORRECCIÓN: Buscamos el punto por su 'uniqueId'.
+            const targetPoint = townData.find(p => p.uniqueId === selectedId);
             if (targetPoint) {
                 const lat = parseFloat(targetPoint.lat), lon = parseFloat(targetPoint.lon);
                 if (!isNaN(lat) && !isNaN(lon)) {
                     map.flyTo([lat, lon], 14);
                     geoJsonLayer.eachLayer(layer => {
-                        // CORRECCIÓN: La comparación ahora es directa y confiable.
-                        if (layer.feature.properties.nombre === selectedTown) {
+                        if (layer.feature.properties.uniqueId === selectedId) {
                             layer.openPopup();
                         }
                     });
