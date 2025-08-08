@@ -27,23 +27,16 @@
         .leaflet-popup-tip { background: #ffffff; }
 
         /* === CORRECCIÓN DE CAPAS (Z-INDEX) PARA FUNCIONALIDAD MÓVIL === */
-        /* El mapa de Leaflet y sus controles tienen un z-index por defecto. 
-           Debemos asegurarnos de que nuestra interfaz esté por encima. */
-        
-        /* Botón de menú: La capa más alta para ser siempre accesible */
         #mobile-menu-btn {
-            z-index: 1001; /* Por encima de los controles de Leaflet (que llegan a 1000) */
+            z-index: 1001;
         }
-        /* Overlay: Debe estar sobre el mapa pero debajo del sidebar */
         #sidebar-overlay {
             z-index: 1999;
             transition: opacity 0.3s ease;
         }
-        /* Sidebar: Debe estar por encima del overlay */
         #sidebar {
             z-index: 2000;
         }
-        /* Modal de reporte: La capa superior a todo */
         #report-modal-bg {
             z-index: 3000;
             transition: opacity 0.3s ease;
@@ -106,7 +99,7 @@
             <div id="stats-summary"></div><div id="layer-filters"></div>
         </div>
         
-        <div class="p-3 border-t border-gray-200 text-xs text-gray-500"><p>🇦🇷 Sistema FireWatch Argentina</p><p>© 2025 Federico Nicolás Sinato</p></div>
+        <div class="p-3 border-t border-gray-200 text-xs text-gray-500"><p>�🇷 Sistema FireWatch Argentina</p><p>© 2025 Federico Nicolás Sinato</p></div>
     </aside>
 
     <main class="flex-1 h-full"><div id="map" class="h-full w-full bg-gray-200"></div></main>
@@ -122,7 +115,6 @@
     </div>
 
     <script>
-        // El JavaScript es idéntico al que funcionaba bien, sin alteraciones.
         let map, geoJsonLayer, townData = [], scanAreaCircles = [];
         const ui = {
             statusMsg: document.getElementById('status-message'),
@@ -164,8 +156,7 @@
         const loadInitialData = async () => {
             ui.statusMsg.textContent = 'Cargando datos...';
             try {
-                // FIX: Changed './data' to 'data' to fix fetch parsing error in sandboxed environments.
-                const response = await fetch('data');
+                const response = await fetch('./data');
                 if (!response.ok) throw new Error(`Error de red: ${response.status}`);
                 const csvText = await response.text();
                 if (!csvText) throw new Error("Archivo de datos vacío.");
@@ -283,19 +274,77 @@
 
         const createPopupContent = (props) => `<div class="text-gray-800" style="min-width:220px;"><h3 class="font-bold text-lg mb-2 border-b pb-1">${props.nombre.toUpperCase()}</h3><p><strong>Riesgo:</strong> ${props.nivel} (${parseFloat(props.riesgo_final).toFixed(1)}%)</p><hr class="my-2"><button class="w-full mt-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-1 px-2 rounded" onclick='generateReport(${JSON.stringify(props)})'>Generar Reporte</button></div>`;
         
+        // ===================================================================
+        // === INICIO DE LA CORRECCIÓN: LÓGICA DEL REPORTE DETALLADO RESTAURADA ===
+        // ===================================================================
         const generateReport = (props) => {
             const id = 'GAR-' + Date.now().toString(36).toUpperCase();
             const date = new Date().toLocaleString('es-AR');
-            document.getElementById('report-id').textContent = id; document.getElementById('report-date').textContent = date;
+            document.getElementById('report-id').textContent = id; 
+            document.getElementById('report-date').textContent = date;
             
-            const getExecutiveSummary = p => ({ 'CRÍTICO': `El nivel de riesgo es <strong>CRÍTICO (${p.riesgo_final}%)</strong>. La combinación de combustible extremadamente seco y condiciones meteorológicas adversas crea un escenario de peligro inminente.`, 'ALTO': `El nivel de riesgo es <strong>ALTO (${p.riesgo_final}%)</strong>. El combustible vegetal se encuentra muy seco y propenso a la ignición.`, 'MODERADO': `El nivel de riesgo es <strong>MODERADO (${p.riesgo_final}%)</strong>. Se detectan algunos factores de estrés en la vegetación.`, 'BAJO': `El nivel de riesgo es <strong>BAJO (${p.riesgo_final}%)</strong>. Las condiciones actuales son seguras.` }[p.nivel] || 'Riesgo no determinado.');
-            const getFuelAnalysis = p => `<h5 class="font-bold mb-1">1. Condición del Combustible</h5><p>NDVI: <strong>${p.ndvi}</strong> (${parseFloat(p.ndvi) < 0.3 ? "muy seco" : "húmedo"})</p><p>Precipitación 60d: <strong>${p.precipitacion_60d} mm</strong> (${parseFloat(p.precipitacion_60d) < 10 ? "sequía" : "suficiente"})</p>`;
-            const getWeatherAnalysis = p => `<h5 class="font-bold mb-1">2. Peligro Meteorológico</h5><p>Temperatura: <strong>${p.temperatura}°C</strong> (${parseFloat(p.temperatura) > 25 ? "alta" : "moderada"})</p><p>Viento: <strong>${p.viento_kmh} km/h</strong> (${parseFloat(p.viento_kmh) > 20 ? "fuerte" : "moderado"})</p>`;
-            const getConclusion = p => ({ 'CRÍTICO': `Se recomienda <strong>alerta máxima</strong> y pre-posición de recursos.`, 'ALTO': `Se recomienda <strong>vigilancia intensiva</strong> y patrullas preventivas.`, 'MODERADO': `Mantener <strong>alerta y monitoreo</strong> regular.`, 'BAJO': `Condiciones seguras. Continuar monitoreo.` }[p.nivel] || 'Sin recomendación.');
+            const getExecutiveSummary = (p) => {
+                const riesgo = p.riesgo_final ? `(${parseFloat(p.riesgo_final).toFixed(1)}%)` : '';
+                const summaries = {
+                    'CRÍTICO': `El nivel de riesgo es <strong>CRÍTICO ${riesgo}</strong>. La combinación de combustible extremadamente seco y condiciones meteorológicas adversas crea un escenario de peligro inminente.`,
+                    'ALTO': `El nivel de riesgo es <strong>ALTO ${riesgo}</strong>. El combustible vegetal se encuentra muy seco y propenso a la ignición.`,
+                    'MODERADO': `El nivel de riesgo es <strong>MODERADO ${riesgo}</strong>. Se detectan algunos factores de estrés en la vegetación.`,
+                    'BAJO': `El nivel de riesgo es <strong>BAJO ${riesgo}</strong>. Las condiciones actuales son seguras.`
+                };
+                return summaries[p.nivel] || 'Riesgo no determinado.';
+            };
 
-            ui.reportContent.innerHTML = `<div class="mb-4"><h3 class="text-lg font-bold">Reporte para: <span class="text-blue-600">${props.nombre.toUpperCase()}</span></h3><p class="text-sm text-gray-500">ID: ${id} | Fecha: ${date}</p></div><div class="bg-gray-100 p-4 rounded-lg"><h4 class="font-bold text-lg mb-2">Resumen Ejecutivo</h4><p>${getExecutiveSummary(props)}</p></div><div><h4 class="font-bold text-lg my-2">Análisis de Componentes</h4><div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm"><div class="bg-gray-50 p-3 rounded-md border">${getFuelAnalysis(props)}</div><div class="bg-gray-50 p-3 rounded-md border">${getWeatherAnalysis(props)}</div></div></div><div class="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded-r-lg mt-2"><h4 class="font-bold">Conclusión y Recomendación</h4><p>${getConclusion(props)}</p></div>`;
+            const getFuelAnalysis = (p) => {
+                const ndvi = parseFloat(p.ndvi);
+                const precip = parseFloat(p.precipitacion_60d);
+                const ndvi_desc = isNaN(ndvi) ? "dato no disponible" : ndvi < 0.3 ? "extremadamente bajo, vegetación muy seca." : ndvi < 0.5 ? "bajo, indicando estrés hídrico." : "saludable, buena humedad.";
+                const precip_desc = isNaN(precip) ? "dato no disponible" : precip < 10 ? "casi nula, sequía profunda." : precip < 50 ? "muy escasa." : "suficiente.";
+                return `<h5 class="font-bold mb-1">1. Condición del Combustible</h5><p>NDVI: <strong>${p.ndvi}</strong>, ${ndvi_desc}</p><p>Precipitación 60d: <strong>${p.precipitacion_60d} mm</strong>, ${precip_desc}</p>`;
+            };
+
+            const getWeatherAnalysis = (p) => {
+                const temp = parseFloat(p.temperatura);
+                const viento = parseFloat(p.viento_kmh);
+                const temp_desc = isNaN(temp) ? "dato no disponible" : temp > 30 ? "muy alta, riesgo crítico." : temp > 25 ? "elevada." : "moderada.";
+                const viento_desc = isNaN(viento) ? "dato no disponible" : viento > 30 ? "extremadamente peligroso." : viento > 20 ? "fuerte, acelerante." : "moderado.";
+                return `<h5 class="font-bold mb-1">2. Peligro Meteorológico</h5><p>Temperatura: <strong>${p.temperatura}°C</strong>, ${temp_desc}</p><p>Viento: <strong>${p.viento_kmh} km/h</strong>, ${viento_desc}</p>`;
+            };
+
+            const getConclusion = (p) => {
+                const conclusions = {
+                    'CRÍTICO': `Se recomienda <strong>alerta máxima</strong> y pre-posición de recursos.`,
+                    'ALTO': `Se recomienda <strong>vigilancia intensiva</strong> y patrullas preventivas.`,
+                    'MODERADO': `Mantener <strong>alerta y monitoreo</strong> regular.`,
+                    'BAJO': `Condiciones seguras. Continuar monitoreo.`
+                };
+                return conclusions[p.nivel] || 'Sin recomendación específica.';
+            };
+
+            ui.reportContent.innerHTML = `
+                <div class="mb-4">
+                    <h3 class="text-lg font-bold">Reporte para: <span class="text-blue-600">${props.nombre.toUpperCase()}</span></h3>
+                    <p class="text-sm text-gray-500">ID: ${id} | Fecha: ${date}</p>
+                </div>
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <h4 class="font-bold text-lg mb-2">Resumen Ejecutivo</h4>
+                    <p>${getExecutiveSummary(props)}</p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-lg my-2">Análisis de Componentes</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div class="bg-gray-50 p-3 rounded-md border">${getFuelAnalysis(props)}</div>
+                        <div class="bg-gray-50 p-3 rounded-md border">${getWeatherAnalysis(props)}</div>
+                    </div>
+                </div>
+                <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded-r-lg mt-2">
+                    <h4 class="font-bold">Conclusión y Recomendación</h4>
+                    <p>${getConclusion(props)}</p>
+                </div>`;
             openReportModal();
         };
+        // =================================================================
+        // === FIN DE LA CORRECCIÓN: LÓGICA DEL REPORTE DETALLADO RESTAURADA ===
+        // =================================================================
 
         const openReportModal = () => { ui.reportModalBg.classList.remove('hidden', 'opacity-0'); };
         const closeReportModal = () => { ui.reportModalBg.classList.add('opacity-0'); setTimeout(() => ui.reportModalBg.classList.add('hidden'), 300); };
@@ -313,3 +362,4 @@
     </script>
 </body>
 </html>
+�
