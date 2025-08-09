@@ -1,58 +1,66 @@
-# 🔥 GeoAlertAR - Sierras Chicas Demo
+🔥 GeoAlertAR – Sierras Chicas (Demo)
+Sistema de detección y predicción temprana de incendios forestales para la región de Sierras Chicas, Córdoba, Argentina.
 
-Sistema de detección temprana de incendios para la región de Sierras Chicas, Córdoba, Argentina.
+🎯 Descripción
+GeoAlertAR es el primer sistema argentino de predicción de riesgo de incendios con validación en campo.
+Esta versión demo está diseñada para uso por parte de bomberos, autoridades y equipos de protección civil en Sierras Chicas, cubriendo:
 
-## 🎯 Descripción
+Agua de Oro
 
-GeoAlertAR es el primer sistema argentino de predicción de riesgo de incendios con validación real. Esta versión demo cubre específicamente la zona de Sierras Chicas incluyendo:
-- Agua de Oro
-- Villa Cerro Azul  
-- El Manzano
-- 15km de radio de cobertura
+Villa Cerro Azul
 
-## 🚀 Características
+El Manzano
 
-- 🛰️ **Análisis satelital en tiempo real** usando NASA/ESA
-- 📊 **80 puntos de monitoreo** estratégicamente distribuidos
-- 🎯 **Precisión validada** con incendios reales
-- 🗺️ **Visualización interactiva** en mapa
-- 📈 **4 niveles de riesgo**: Crítico, Alto, Moderado, Bajo
-- ⚡ **Actualización diaria** automática
+Radio de cobertura: 15 km
 
-## 🌐 Acceso
+💡 El objetivo es anticipar condiciones de riesgo y facilitar la respuesta rápida antes de que un foco se propague.
 
-**URL**: [https://geoalertar.com.ar](https://geoalertar.com.ar)
+🚀 Características principales
+🛰️ Análisis satelital en tiempo real usando datos de NASA y ESA.
 
-## 📊 Metodología
+📊 80 puntos de monitoreo estratégicamente distribuidos.
 
-El sistema utiliza múltiples índices satelitales:
-- **NDVI**: Estado de vegetación
-- **NDWI**: Contenido de humedad  
-- **NBR**: Índice de combustible
-- **Temperatura**: ERA5-Land
-- **Precipitación**: NASA GPM
-- **Topografía**: SRTM elevación y pendiente
+✅ Precisión validada con incendios reales históricos.
 
-## 🤝 Colaboración
+🗺️ Mapa interactivo con visualización clara de niveles de riesgo.
 
-Este es un proyecto en desarrollo activo. Tu feedback es fundamental:
+📈 4 niveles de riesgo: Crítico, Alto, Moderado, Bajo.
 
-**¿Detectaste un incendio no marcado?** 
-**¿El sistema predijo correctamente?**
+⚡ Actualización automática diaria.
 
-Contacto: geoalertar1@gmail.com
+🌐 Acceso al sistema
+🔗 URL oficial: https://geoalertar.com.ar
 
-## 👨‍💻 Autor
+📊 Metodología de análisis
+El sistema combina múltiples fuentes y variables para calcular el riesgo:
 
-**Federico Nicolás Sinato**
-- Sistema FireWatch Argentina
-- Innovación 100% nacional 🇦🇷
+Variable	Fuente de datos
+NDVI – Estado de vegetación	Sentinel-2 / MODIS
+NDWI – Contenido de humedad	Sentinel-2
+NBR – Índice de combustible	Landsat / Sentinel-2
+Temperatura superficial	ERA5-Land
+Precipitación acumulada	NASA GPM
+Topografía y pendiente	SRTM
 
-## 📜 Licencia
+🧠 GeoAlertAR integra estos parámetros con un modelo predictivo multi-factor, ajustado y validado con datos históricos de incendios.
 
-Ver archivo [LICENSE](LICENSE) para detalles de uso.
+📌 Cómo colaborar
+Este es un proyecto en desarrollo activo y tu aporte es fundamental.
 
----
+🔹 Reportá eventos no detectados.
+🔹 Comentá la precisión de las predicciones.
+🔹 Sugerí mejoras técnicas o de interfaz.
 
-*"Protegiendo las Sierras con tecnología argentina"* 🔥🏔️# GeoalertAr-sierras-chicas-cordoba-
-Sistema geoalertar ya en funcionamiento para el uso de los bomberos de sierras chicas cordoba , que lo pruebes usen y me den feedback para mejoras etc 
+📬 Contacto: geoalertar1@gmail.com
+
+👨‍💻 Autor y créditos
+Federico Nicolás Sinato
+
+Creador de GeoAlertAR y FireWatch Argentina
+
+Innovación 100% nacional 🇦🇷
+
+📜 Licencia
+Este proyecto está protegido bajo los términos detallados en el archivo LICENSE.
+
+"Protegiendo las Sierras con tecnología argentina" 🔥🏔️
