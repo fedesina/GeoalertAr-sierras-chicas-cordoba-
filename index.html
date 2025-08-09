@@ -14,6 +14,10 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
+    <!-- NUEVO: Librería para el Tour Guiado (Shepherd.js) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/css/shepherd.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/js/shepherd.min.js"></script>
+
     <!-- Estilos Personalizados -->
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -38,6 +42,17 @@
         }
         
         .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 4rem; color: rgba(59, 130, 246, 0.1); font-weight: bold; pointer-events: none; z-index: 1; }
+
+        /* Estilos para el Tour Guiado */
+        .shepherd-element { box-shadow: 0 5px 15px rgba(0,0,0,.2); border-radius: 8px; max-width: 350px; }
+        .shepherd-header { background-color: #3b82f6; padding: 1rem; }
+        .shepherd-title { color: white; font-weight: bold; }
+        .shepherd-cancel-icon { color: white; opacity: 0.75; }
+        .shepherd-text { padding: 1rem; color: #374151; }
+        .shepherd-button { background: #3b82f6; color: white; border-radius: 6px; padding: 0.5rem 1rem; }
+        .shepherd-button:not(:disabled):hover { background: #2563eb; }
+        .shepherd-button.shepherd-button-secondary { background: #e5e7eb; color: #374151; }
+        .shepherd-button.shepherd-button-secondary:not(:disabled):hover { background: #d1d5db; }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -55,7 +70,7 @@
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
         
-        <div class="p-4 border-b border-gray-200">
+        <div class="p-4 border-b border-gray-200" id="tour-step-1">
             <h1 class="text-2xl font-bold text-gray-900">🔥 GeoAlert<span class="text-blue-600">AR</span></h1>
             <p class="text-sm text-gray-500">Demo Sierras Chicas v1.0</p>
         </div>
@@ -158,7 +173,7 @@
             try {
                 townData = parseCSV(csvText);
                 townData.forEach((row, index) => {
-                    row.uniqueId = `${row.ciudad}-${index}`; // ID único para cada punto
+                    row.uniqueId = `${row.ciudad}-${index}`;
                     row.nombre = row.ciudad?.replace(/_/g, ' ') || 'Punto de Análisis';
                 });
 
@@ -170,6 +185,12 @@
                 ui.statusMsg.textContent = `✅ ${summary.totalPuntos} puntos cargados`;
                 ui.resultsPanel.classList.remove('hidden');
                 ui.searchPanel.classList.remove('hidden');
+                
+                // Iniciar el tour solo si no se ha completado antes
+                if (!localStorage.getItem('geoalertar_tour_completed')) {
+                    setTimeout(startTour, 1000); // Pequeña demora para que el mapa se renderice
+                }
+
             } catch (error) {
                 ui.statusMsg.innerHTML = `<span class="text-red-600 font-bold">❌ ${error.message}</span>`;
             }
@@ -230,7 +251,6 @@
         };
 
         const populateTownSelector = (data) => {
-            // CORRECCIÓN: Usamos el 'uniqueId' para el valor de la opción, y 'nombre' para el texto visible.
             ui.townSelect.innerHTML = '<option value="">Seleccione...</option>' + data.map(item => `<option value="${item.uniqueId}">${item.nombre}</option>`).sort((a, b) => a.localeCompare(b)).join('');
             ui.townSelect.disabled = false; ui.searchBtn.disabled = false;
         };
@@ -238,7 +258,6 @@
         const handleTownSearch = () => {
             const selectedId = ui.townSelect.value;
             if (!selectedId) return;
-            // CORRECCIÓN: Buscamos el punto por su 'uniqueId'.
             const targetPoint = townData.find(p => p.uniqueId === selectedId);
             if (targetPoint) {
                 const lat = parseFloat(targetPoint.lat), lon = parseFloat(targetPoint.lon);
@@ -365,6 +384,86 @@
             const activeLevels = [...document.querySelectorAll('#layer-filters input[data-level]:checked')].map(cb => cb.dataset.level);
             if (geoJsonLayer) geoJsonLayer.eachLayer(layer => activeLevels.includes(layer.feature.properties.nivel) ? map.addLayer(layer) : map.removeLayer(layer));
         };
+
+        // =================================================================================
+        // == INICIO DE LA LÓGICA DEL TOUR GUIADO ==
+        // =================================================================================
+        function startTour() {
+            const tour = new Shepherd.Tour({
+                useModalOverlay: true,
+                defaultStepOptions: {
+                    classes: 'shadow-lg bg-white',
+                    scrollTo: true,
+                    cancelIcon: { enabled: true },
+                    buttons: [
+                        { text: 'Atrás', action: 'back', classes: 'shepherd-button-secondary' },
+                        { text: 'Siguiente', action: 'next' }
+                    ]
+                }
+            });
+
+            tour.addStep({
+                id: 'welcome',
+                title: '¡Bienvenido a GeoAlertAR!',
+                text: 'Este es un tour rápido para mostrarte cómo usar el sistema de alerta de incendios. Puedes cerrarlo en cualquier momento.',
+                buttons: [{ text: 'Comenzar', action: 'next' }]
+            });
+
+            tour.addStep({
+                id: 'map-view',
+                title: 'El Mapa de Riesgo',
+                text: 'Aquí visualizarás los puntos de monitoreo. El color de cada punto indica el nivel de riesgo de incendio: desde verde (Bajo) hasta rojo (Crítico).',
+                attachTo: { element: '#map', on: 'top' }
+            });
+
+            const sidebarElement = window.innerWidth < 768 ? '#mobile-menu-btn' : '#sidebar';
+            const sidebarPosition = window.innerWidth < 768 ? 'right' : 'right';
+
+            tour.addStep({
+                id: 'sidebar-info',
+                title: 'Panel de Control',
+                text: 'Este panel contiene toda la información. Aquí verás el resumen de riesgo, podrás buscar localidades y filtrar los puntos que ves en el mapa.',
+                attachTo: { element: sidebarElement, on: sidebarPosition },
+                when: {
+                    show: () => { if (window.innerWidth < 768) openMobileMenu(); }
+                }
+            });
+            
+            tour.addStep({
+                id: 'search',
+                title: 'Buscador de Localidades',
+                text: 'Usa esta lista para encontrar rápidamente un punto de análisis específico y centrar el mapa en él.',
+                attachTo: { element: '#search-panel', on: 'bottom' }
+            });
+
+            tour.addStep({
+                id: 'click-point',
+                title: 'Información Rápida',
+                text: 'Haz clic en cualquier punto del mapa para ver su información detallada: nivel de riesgo, población y los datos satelitales clave.',
+                attachTo: { element: '#map', on: 'top' }
+            });
+
+            tour.addStep({
+                id: 'report',
+                title: 'Reporte de Inteligencia',
+                text: 'Dentro de la ventana de información, presiona este botón para generar un reporte profesional y completo. ¡Es la herramienta más potente del sistema!',
+                buttons: [{ text: 'Finalizar', action: 'complete' }]
+            });
+
+            tour.on('complete', () => {
+                localStorage.setItem('geoalertar_tour_completed', 'true');
+                if (window.innerWidth < 768) closeMobileMenu();
+            });
+            tour.on('cancel', () => {
+                localStorage.setItem('geoalertar_tour_completed', 'true');
+                if (window.innerWidth < 768) closeMobileMenu();
+            });
+
+            tour.start();
+        }
+        // =================================================================================
+        // == FIN DE LA LÓGICA DEL TOUR GUIADO ==
+        // =================================================================================
 
         document.addEventListener('DOMContentLoaded', () => {
             initMap();
