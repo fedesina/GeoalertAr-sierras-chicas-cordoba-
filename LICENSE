@@ -1,47 +1,31 @@
+# LICENSE – GEOALERTAR SIERRAS CHICAS DEMO
 
-📜 LICENSE – GEOALERTAR SIERRAS CHICAS DEMO
 Copyright © 2024–2025 Federico Nicolás Sinato
-Todos los derechos reservados sobre la metodología y calibración propietaria.
-
-🔓 Permisos de uso público (Versión Demo – Sierras Chicas)
-Este software se entrega únicamente para uso no comercial por parte de bomberos y servicios de emergencia de la región de Sierras Chicas, Córdoba, Argentina.
+Todos los derechos reservados sobre la metodología, calibración y marca.
 
 PERMITIDO:
-
-✅ Uso gratuito para actividades de prevención y respuesta ante incendios.
-
-✅ Acceso y visualización de datos públicos generados por el sistema.
-
-✅ Compartir resultados con autoridades competentes.
-
-✅ Enviar feedback técnico para la mejora del sistema.
+- Uso gratuito no comercial para prevención y respuesta ante incendios.
+- Acceso y visualización de datos públicos generados por el sistema.
+- Compartir resultados con autoridades competentes.
+- Enviar feedback técnico para mejora del sistema.
 
 NO PERMITIDO:
+- Uso comercial sin autorización previa por escrito.
+- Modificación o redistribución del código fuente sin permiso.
+- Uso de la metodología FireWatch/GeoAlertAR sin atribución.
+- Distribución del sistema completo sin consentimiento del autor.
 
-❌ Uso comercial sin autorización previa y por escrito.
+COMPONENTES Y LICENCIAS:
+- Visualización web (HTML/JS) → MIT License (con atribución).
+- Metodología y calibración → Propietaria – Federico Nicolás Sinato.
+- Datos satelitales → NASA/ESA (dominio público con citación requerida).
 
-❌ Modificación del código fuente sin permiso.
-
-❌ Redistribución del sistema completo.
-
-❌ Uso de la metodología FireWatch/GeoAlertAR sin atribución.
-
-📦 Componentes y licencias aplicables
-Visualización web (HTML/JS) → MIT License (uso libre con atribución).
-
-Metodología FireWatch/GeoAlertAR → Propietaria – Federico Sinato.
-
-Datos satelitales → NASA/ESA (dominio público, con citación requerida).
-
-Calibración regional → Propietaria – GeoAlertAR.
-
-⚠️ Descargo de responsabilidad
-Este sistema se proporciona “tal cual” con fines de demostración y evaluación.
-No se garantiza precisión absoluta ni reemplaza fuentes oficiales.
+DESCARGO DE RESPONSABILIDAD:
+Este sistema se entrega "tal cual" para evaluación.  
+No se garantiza precisión absoluta ni reemplaza fuentes oficiales.  
 El usuario es responsable de verificar toda información antes de tomar decisiones críticas.
 
-📬 Contacto
-Para uso comercial, expansión regional o licenciamiento:
-📧 geoalertar1@gmail.com
+CONTACTO:
+geoalertar1@gmail.com
 
 FireWatch Argentina® – Sistema Nacional de Detección y Predicción de Incendios
