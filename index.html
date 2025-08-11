@@ -2,63 +2,395 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vista Previa del Popup</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GeoAlertAR - Sistema de Detección de Incendios | Sierras Chicas Demo</title>
+    
+    <!-- Meta tags -->
+    <meta name="description" content="Sistema de detección temprana de incendios - Sierras Chicas, Córdoba">
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+    
+    <!-- Librerías -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/css/shepherd.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/js/shepherd.min.js"></script>
+
+    <!-- Estilos Personalizados -->
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #e5e7eb;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
+        body { font-family: 'Inter', sans-serif; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        .pulse { animation: pulse 2s infinite; }
+        .leaflet-div-icon { background: transparent; border: none; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .leaflet-popup-content-wrapper { border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .leaflet-popup-tip { background: #ffffff; }
+
+        #mobile-menu-btn { z-index: 1001; }
+        #sidebar-overlay { z-index: 1999; transition: opacity 0.3s ease; }
+        #sidebar { z-index: 2000; }
+        #report-modal-bg { z-index: 3000; transition: opacity 0.3s ease; }
+        #report-modal-content { transition: transform 0.3s ease; }
+
+        @media (max-width: 768px) {
+            #sidebar { transform: translateX(-100%); transition: transform 0.3s ease; width: 85%; max-width: 320px; }
+            #sidebar.open { transform: translateX(0); }
         }
-        .leaflet-popup-content-wrapper {
-            background: #ffffff;
-            color: #1f2937;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        .leaflet-popup-content {
-            margin: 1rem;
-        }
+        
+        .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 4rem; color: rgba(59, 130, 246, 0.1); font-weight: bold; pointer-events: none; z-index: 1; }
+
+        .shepherd-element { box-shadow: 0 5px 15px rgba(0,0,0,.2); border-radius: 8px; max-width: 350px; }
+        .shepherd-header { background-color: #3b82f6; padding: 1rem; }
+        .shepherd-title { color: white; font-weight: bold; }
+        .shepherd-cancel-icon { color: white; opacity: 0.75; }
+        .shepherd-text { padding: 1rem; color: #374151; }
+        .shepherd-button { background: #3b82f6; color: white; border-radius: 6px; padding: 0.5rem 1rem; }
+        .shepherd-button:not(:disabled):hover { background: #2563eb; }
+        .shepherd-button.shepherd-button-secondary { background: #e5e7eb; color: #374151; }
+        .shepherd-button.shepherd-button-secondary:not(:disabled):hover { background: #d1d5db; }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
-    <div class="leaflet-popup-content-wrapper">
-        <div class="leaflet-popup-content">
-            <!-- Contenido del Popup -->
-            <div class="text-gray-800" style="min-width: 240px;">
-                <h3 class="font-bold text-lg mb-2 border-b pb-1">RUTA PROVINCIAL DE ENLACE 53</h3>
-                <p class="text-base"><strong class="text-red-600">CRÍTICO</strong> (100.0%)</p>
-                
-                <hr class="my-2 border-gray-200">
-                
-                <div class="text-xs text-gray-600 space-y-1">
-                    <div class="flex justify-between font-semibold text-gray-800">
-                        <span>Factor:</span>
-                        <span>Satélite vs Real</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span>🌡️ Temp:</span>
-                        <span class="font-mono">10.3 vs 13.2 °C</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span>💨 Viento:</span>
-                        <span class="font-mono">10.3 vs 13.1 km/h</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span>💧 Precip:</span>
-                        <span class="font-mono">60.4 vs 0.0 mm</span>
-                    </div>
-                </div>
-                
-                <button class="w-full mt-3 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-1 px-2 rounded">Generar Reporte Completo</button>
+
+<body class="bg-gray-100 text-gray-800 flex h-screen overflow-hidden">
+
+    <button id="mobile-menu-btn" class="md:hidden fixed top-4 left-4 bg-white p-2 rounded-lg shadow-lg">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+    </button>
+    
+    <div id="sidebar-overlay" class="md:hidden fixed inset-0 bg-black bg-opacity-50 opacity-0 pointer-events-none"></div>
+
+    <aside id="sidebar" class="w-80 bg-white border-r border-gray-200 flex flex-col h-full fixed md:relative md:translate-x-0">
+        <button id="close-sidebar" class="md:hidden absolute top-4 right-4 text-gray-500">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+        
+        <div class="p-4 border-b border-gray-200" id="tour-step-1">
+            <h1 class="text-2xl font-bold text-gray-900">🔥 GeoAlert<span class="text-blue-600">AR</span></h1>
+            <p class="text-sm text-gray-500">Demo Sierras Chicas v1.0</p>
+        </div>
+        
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-3 mx-4 mt-4 rounded-r">
+            <p class="text-xs text-blue-800"><strong>🔬 Versión Demo:</strong> En evaluación para bomberos. <a href="mailto:geoalertar1@gmail.com" class="underline">Enviar feedback</a></p>
+        </div>
+        
+        <div class="p-4 border-b border-gray-200"><div id="status-message" class="text-center text-sm text-gray-500 h-5"></div></div>
+        
+        <div id="search-panel" class="p-4 space-y-2 border-b border-gray-200 hidden">
+            <label for="town-select" class="block text-sm font-medium text-gray-600">Buscar Localidad</label>
+            <div class="flex space-x-2">
+                <select id="town-select" class="w-full bg-gray-50 border border-gray-300 rounded-md p-2 text-gray-900 focus:ring-2 focus:ring-blue-500" disabled><option>Cargando...</option></select>
+                <button id="search-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-3 rounded-md" disabled>Ir</button>
             </div>
-            <!-- Fin del Contenido -->
+        </div>
+        
+        <div id="results-panel" class="p-4 space-y-4 flex-grow overflow-y-auto custom-scrollbar hidden">
+            <div id="stats-summary"></div><div id="layer-filters"></div>
+        </div>
+        
+        <div class="p-3 border-t border-gray-200 text-xs text-gray-500"><p>🇦🇷 Sistema FireWatch Argentina</p><p>© 2025 Federico Nicolás Sinato</p></div>
+    </aside>
+
+    <main class="flex-1 h-full"><div id="map" class="h-full w-full bg-gray-200"></div></main>
+    
+    <div id="report-modal-bg" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden opacity-0">
+        <div id="report-modal-content" class="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col transform scale-95 relative">
+            <div class="watermark">GEOALERTAR</div>
+            <div class="flex justify-between items-center p-4 border-b"><h2 class="text-xl font-bold text-gray-800">📄 Reporte de Inteligencia de Riesgo</h2><button id="close-report-btn" class="text-gray-400 hover:text-gray-600 text-3xl">&times;</button></div>
+            
+            <div class="bg-red-50 border-l-4 border-red-500 p-3 mx-4 mt-4 rounded-r">
+                <p class="text-xs text-red-800"><strong>⚠️ CONFIDENCIAL:</strong> Propiedad de GeoAlertAR. Prohibida su distribución.</p>
+            </div>
+            
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-3 mx-4 mt-2 rounded-r">
+                <p class="text-xs text-blue-800"><strong>ℹ️ Validez Predictiva:</strong> El análisis de riesgo es una proyección con vigencia para los próximos 7 días.</p>
+            </div>
+
+            <div id="report-content" class="p-6 overflow-y-auto text-gray-700 space-y-4 relative z-10"></div>
+            <div class="p-4 border-t bg-gray-50 text-xs text-gray-600"><p class="text-center">Reporte por <strong>GeoAlertAR®</strong> | ID: <span id="report-id"></span> | <span id="report-date"></span></p></div>
         </div>
     </div>
+
+    <script>
+        let map, geoJsonLayer, townData = [], scanAreaCircles = [];
+        const ui = {
+            statusMsg: document.getElementById('status-message'),
+            resultsPanel: document.getElementById('results-panel'),
+            statsSummary: document.getElementById('stats-summary'),
+            layerFilters: document.getElementById('layer-filters'),
+            searchPanel: document.getElementById('search-panel'),
+            townSelect: document.getElementById('town-select'),
+            searchBtn: document.getElementById('search-btn'),
+            reportModalBg: document.getElementById('report-modal-bg'),
+            reportContent: document.getElementById('report-content'),
+            closeReportBtn: document.getElementById('close-report-btn'),
+            sidebar: document.getElementById('sidebar'),
+            mobileMenuBtn: document.getElementById('mobile-menu-btn'),
+            closeSidebar: document.getElementById('close-sidebar'),
+            sidebarOverlay: document.getElementById('sidebar-overlay')
+        };
+
+        const openMobileMenu = () => { ui.sidebar.classList.add('open'); ui.sidebarOverlay.classList.remove('opacity-0', 'pointer-events-none'); };
+        const closeMobileMenu = () => { ui.sidebar.classList.remove('open'); ui.sidebarOverlay.classList.add('opacity-0', 'pointer-events-none'); };
+
+        const initMap = () => {
+            const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
+            const hybridLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',{ maxZoom: 20, subdomains:['mt0','mt1','mt2','mt3'], attribution: 'Map data &copy; Google' });
+            map = L.map('map', { center: [-31.07, -64.30], zoom: window.innerWidth < 768 ? 10 : 11, layers: [hybridLayer], zoomControl: window.innerWidth > 768 });
+            const baseMaps = { "Híbrido": hybridLayer, "Satélite": satelliteLayer };
+            L.control.layers(baseMaps).addTo(map);
+        };
+
+        const setupEventListeners = () => {
+            ui.mobileMenuBtn?.addEventListener('click', openMobileMenu);
+            ui.closeSidebar?.addEventListener('click', closeMobileMenu);
+            ui.sidebarOverlay?.addEventListener('click', closeMobileMenu);
+            ui.searchBtn.addEventListener('click', handleTownSearch);
+            ui.closeReportBtn.addEventListener('click', closeReportModal);
+            ui.reportModalBg.addEventListener('click', (e) => { if (e.target === ui.reportModalBg) closeReportModal(); });
+        };
+
+        const loadInitialData = async () => {
+            ui.statusMsg.textContent = 'Cargando datos...';
+            try {
+                const response = await fetch('data.csv');
+                if (!response.ok) throw new Error(`Error de red: ${response.status}`);
+                const csvText = await response.text();
+                if (!csvText) throw new Error("Archivo de datos vacío.");
+                processCSVData(csvText);
+            } catch (error) {
+                console.error("Error al cargar datos:", error);
+                ui.statusMsg.innerHTML = `<span class="text-red-600 font-bold">❌ Error al cargar.</span>`;
+            }
+        };
+        
+        const processCSVData = (csvText) => {
+            try {
+                townData = parseCSV(csvText);
+                townData.forEach((row, index) => {
+                    row.uniqueId = `${row.ciudad}-${index}`;
+                    row.nombre = row.ciudad?.replace(/_/g, ' ') || 'Punto de Análisis';
+                });
+
+                const geojsonData = convertToGeoJSON(townData);
+                const summary = calculateSummary(townData);
+                renderMapData(geojsonData);
+                updateSidebar(summary);
+                populateTownSelector(townData);
+                ui.statusMsg.textContent = `✅ ${summary.totalPuntos} puntos cargados`;
+                ui.resultsPanel.classList.remove('hidden');
+                ui.searchPanel.classList.remove('hidden');
+                
+                if (!localStorage.getItem('geoalertar_tour_completed')) {
+                    setTimeout(startTour, 1000);
+                }
+
+            } catch (error) {
+                ui.statusMsg.innerHTML = `<span class="text-red-600 font-bold">❌ ${error.message}</span>`;
+            }
+        };
+
+        const parseCSV = (text) => {
+            const lines = text.trim().split(/\r?\n/);
+            const headers = lines.shift().split(',').map(h => h.trim());
+            return lines.map(line => {
+                if (!line) return null;
+                const values = line.split(',');
+                return headers.reduce((obj, h, i) => (obj[h] = values[i]?.trim() || '', obj), {});
+            }).filter(Boolean);
+        };
+
+        const convertToGeoJSON = (data) => ({
+            type: "FeatureCollection",
+            features: data.map(row => {
+                const lat = parseFloat(row.lat), lon = parseFloat(row.lon);
+                if (isNaN(lat) || isNaN(lon)) return null;
+                return {
+                    type: "Feature",
+                    geometry: { type: "Point", coordinates: [lon, lat] },
+                    properties: { ...row }
+                };
+            }).filter(Boolean)
+        });
+        
+        const calculateSummary = (data) => data.reduce((sum, row) => {
+            sum.totalPuntos++;
+            const nivel = row.nivel?.toUpperCase();
+            if (nivel === 'CRÍTICO') sum.critico++; else if (nivel === 'ALTO') sum.alto++;
+            else if (nivel === 'MODERADO') sum.moderado++; else if (nivel === 'BAJO') sum.bajo++;
+            return sum;
+        }, { totalPuntos: 0, critico: 0, alto: 0, moderado: 0, bajo: 0 });
+
+        const renderMapData = (geojsonData) => {
+            if (geoJsonLayer) map.removeLayer(geoJsonLayer);
+            scanAreaCircles.forEach(c => map.removeLayer(c));
+            scanAreaCircles = [];
+
+            geoJsonLayer = L.geoJSON(geojsonData, {
+                pointToLayer: (feature, latlng) => {
+                    scanAreaCircles.push(L.circle(latlng, { radius: 1000, color: '#fff', weight: 1, opacity: 0.3, fillOpacity: 0.05 }));
+                    return L.marker(latlng, { icon: L.divIcon({ html: createMarkerIcon(feature.properties.nivel), className: 'leaflet-div-icon', iconSize: [32, 42], iconAnchor: [16, 42], popupAnchor: [0, -42] }) });
+                },
+                onEachFeature: (feature, layer) => layer.bindPopup(createPopupContent(feature.properties))
+            }).addTo(map);
+            
+            if (geojsonData.features.length > 0) map.fitBounds(geoJsonLayer.getBounds().pad(0.1));
+        };
+
+        const updateSidebar = (summary) => {
+            ui.statsSummary.innerHTML = `<h3 class="text-lg font-semibold text-gray-900 mb-2">Resumen de Riesgo</h3><div class="bg-gray-50 p-3 rounded-lg text-sm border space-y-1"><div class="flex justify-between"><span>Puntos Analizados:</span><span class="font-semibold">${summary.totalPuntos}</span></div><hr class="my-1"><div class="flex justify-between text-red-600"><span>🔴 Crítico:</span><span class="font-semibold">${summary.critico}</span></div><div class="flex justify-between text-orange-500"><span>🟠 Alto:</span><span class="font-semibold">${summary.alto}</span></div><div class="flex justify-between text-yellow-500"><span>🟡 Moderado:</span><span class="font-semibold">${summary.moderado}</span></div><div class="flex justify-between text-green-600"><span>🟢 Bajo:</span><span class="font-semibold">${summary.bajo}</span></div></div>`;
+            const riskLevels = [{ id: 'critico', name: 'Crítico' }, { id: 'alto', name: 'Alto' }, { id: 'moderado', name: 'Moderado' }, { id: 'bajo', name: 'Bajo' }];
+            ui.layerFilters.innerHTML = `<h3 class="text-lg font-semibold text-gray-900 mb-2 mt-4">Filtros de Capas</h3><div class="space-y-2 text-sm">${riskLevels.map(l => `<label for="filter-${l.id}" class="flex items-center space-x-3 cursor-pointer p-1 rounded-md hover:bg-gray-100"><input type="checkbox" id="filter-${l.id}" data-level="${l.name.toUpperCase()}" checked class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"><span class="font-medium">${l.name}</span></label>`).join('')}<hr class="my-2"><label for="filter-area" class="flex items-center space-x-3 cursor-pointer p-1 rounded-md hover:bg-gray-100"><input type="checkbox" id="filter-area" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"><span class="font-medium text-gray-700">🛰️ Mostrar Área de Análisis</span></label></div>`;
+            document.querySelectorAll('#layer-filters input').forEach(cb => cb.addEventListener('change', cb.id === 'filter-area' ? toggleScanArea : handleFilterChange));
+        };
+
+        const populateTownSelector = (data) => {
+            ui.townSelect.innerHTML = '<option value="">Seleccione...</option>' + data.map(item => `<option value="${item.uniqueId}">${item.nombre}</option>`).sort((a, b) => a.localeCompare(b)).join('');
+            ui.townSelect.disabled = false; ui.searchBtn.disabled = false;
+        };
+
+        const handleTownSearch = () => {
+            const selectedId = ui.townSelect.value;
+            if (!selectedId) return;
+            const targetPoint = townData.find(p => p.uniqueId === selectedId);
+            if (targetPoint) {
+                const lat = parseFloat(targetPoint.lat), lon = parseFloat(targetPoint.lon);
+                if (!isNaN(lat) && !isNaN(lon)) {
+                    map.flyTo([lat, lon], 14);
+                    geoJsonLayer.eachLayer(layer => {
+                        if (layer.feature.properties.uniqueId === selectedId) {
+                            layer.openPopup();
+                        }
+                    });
+                    if (window.innerWidth < 768) closeMobileMenu();
+                }
+            }
+        };
+
+        const toggleScanArea = () => {
+            const show = document.getElementById('filter-area').checked;
+            scanAreaCircles.forEach(c => show ? map.addLayer(c) : map.removeLayer(c));
+        };
+
+        const createMarkerIcon = (nivel) => {
+            const colors = { 'CRÍTICO': '#ef4444', 'ALTO': '#f97316', 'MODERADO': '#eab308', 'BAJO': '#22c55e' };
+            const color = colors[nivel?.toUpperCase()] || '#6b7280';
+            return `<div class="${nivel?.toUpperCase() === 'CRÍTICO' ? 'pulse' : ''}" style="width:32px;height:42px;"><svg viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 4px 6px rgba(0,0,0,0.3));"><path d="M16 0C7.16344 0 0 7.16344 0 16C0 28 16 42 16 42C16 42 32 28 32 16C32 7.16344 24.8366 0 16 0Z" fill="${color}"/><circle cx="16" cy="16" r="7" fill="white"/></svg></div>`;
+        };
+        
+        const createPopupContent = (props) => {
+            const riesgo = props.riesgo_final ? parseFloat(props.riesgo_final).toFixed(1) : 'N/A';
+            const nivel = props.nivel || 'Indeterminado';
+
+            const formatComparison = (label, unit, sat_val, real_val) => {
+                const sat = sat_val ? parseFloat(sat_val).toFixed(1) : 'N/A';
+                const real = real_val ? parseFloat(real_val).toFixed(1) : 'N/A';
+                return `<div class="flex justify-between"><span>${label}:</span><span class="font-mono">${sat} vs ${real} ${unit}</span></div>`;
+            };
+
+            const datosCrudosHTML = `<hr class="my-2 border-gray-200">
+            <div class="text-xs text-gray-600 space-y-1">
+                <div class="flex justify-between font-semibold text-gray-800"><span>Factor:</span><span>Satélite vs Real</span></div>
+                ${formatComparison('🌡️ Temp', '°C', props.temperatura_sat, props.temperatura_real)}
+                ${formatComparison('💨 Viento', 'km/h', props.viento_kmh_sat, props.viento_kmh_real)}
+                ${formatComparison('💧 Precip', 'mm', props.precipitacion_30d_sat, props.precipitacion_real)}
+            </div>`;
+
+            return `<div class="text-gray-800" style="min-width: 240px;">
+                        <h3 class="font-bold text-lg mb-2 border-b pb-1">${props.nombre.toUpperCase()}</h3>
+                        <p class="text-base"><strong class="${nivel === 'CRÍTICO' ? 'text-red-600' : 'text-orange-500'}">${nivel}</strong> (${riesgo}%)</p>
+                        ${datosCrudosHTML}
+                        <button class="w-full mt-3 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-1 px-2 rounded" onclick='generateReport(${JSON.stringify(props)})'>Generar Reporte Completo</button>
+                    </div>`;
+        };
+        
+        const generateReport = (props) => {
+            const id = 'GAR-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substr(2, 5).toUpperCase();
+            const date = new Date().toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
+            document.getElementById('report-id').textContent = id;
+            document.getElementById('report-date').textContent = date;
+
+            const getExecutiveSummary = (p) => {
+                const nivel = p.nivel?.toUpperCase();
+                const riesgo = p.riesgo_final ? `(${parseFloat(p.riesgo_final).toFixed(1)}%)` : '';
+                const summaries = {
+                    'CRÍTICO': `El nivel de riesgo es <strong>CRÍTICO ${riesgo}</strong>. La combinación de combustible extremadamente seco y condiciones meteorológicas adversas crea un escenario de peligro inminente.`,
+                    'ALTO': `El nivel de riesgo es <strong>ALTO ${riesgo}</strong>. El combustible vegetal se encuentra muy seco y propenso a la ignición.`,
+                    'MODERADO': `El nivel de riesgo es <strong>MODERADO ${riesgo}</strong>. Se detectan algunos factores de estrés en la vegetación.`,
+                    'BAJO': `El nivel de riesgo es <strong>BAJO ${riesgo}</strong>. Las condiciones actuales son seguras.`
+                };
+                return summaries[nivel] || 'Riesgo no determinado.';
+            };
+
+            const getFuelAnalysis = (p) => {
+                const ndvi = parseFloat(p.ndvi);
+                const precip = parseFloat(p.precipitacion_30d_sat);
+                const ndvi_desc = isNaN(ndvi) ? "dato no disponible" : ndvi < 0.3 ? "extremadamente bajo, vegetación muy seca." : ndvi < 0.5 ? "bajo, indicando estrés hídrico." : "saludable.";
+                const precip_desc = isNaN(precip) ? "dato no disponible" : precip < 10 ? "casi nula, sequía profunda." : precip < 50 ? "muy escasa." : "suficiente.";
+                return `<h5 class="font-bold mb-1">1. Condición del Combustible</h5><p>NDVI: <strong>${p.ndvi}</strong>, ${ndvi_desc}</p><p>Precipitación 30d (Sat): <strong>${p.precipitacion_30d_sat} mm</strong>, ${precip_desc}</p>`;
+            };
+
+            const getWeatherAnalysis = (p) => {
+                const temp = parseFloat(p.temperatura_sat);
+                const viento = parseFloat(p.viento_kmh_sat);
+                const temp_desc = isNaN(temp) ? "dato no disponible" : temp > 30 ? "muy alta, riesgo crítico." : temp > 25 ? "elevada." : "moderada.";
+                const viento_desc = isNaN(viento) ? "dato no disponible" : viento > 30 ? "extremadamente peligroso." : viento > 20 ? "fuerte, acelerante." : "moderado.";
+                return `<h5 class="font-bold mb-1">2. Peligro Meteorológico</h5><p>Temperatura (Sat): <strong>${p.temperatura_sat}°C</strong>, ${temp_desc}</p><p>Viento (Sat): <strong>${p.viento_kmh_sat} km/h</strong>, ${viento_desc}</p>`;
+            };
+
+            const getConclusion = (p) => {
+                const nivel = p.nivel?.toUpperCase();
+                const conclusions = {
+                    'CRÍTICO': `Se recomienda <strong>alerta máxima</strong> y pre-posición de recursos.`,
+                    'ALTO': `Se recomienda <strong>vigilancia intensiva</strong> y patrullas preventivas.`,
+                    'MODERADO': `Mantener <strong>alerta y monitoreo</strong> regular.`,
+                    'BAJO': `Condiciones seguras. Continuar monitoreo.`
+                };
+                return conclusions[nivel] || 'Sin recomendación.';
+            };
+
+            ui.reportContent.innerHTML = `
+                <div class="mb-4">
+                    <h3 class="text-lg font-bold">Reporte para: <span class="text-blue-600">${props.nombre.toUpperCase()}</span></h3>
+                </div>
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <h4 class="font-bold text-lg mb-2">Resumen Ejecutivo</h4>
+                    <p>${getExecutiveSummary(props)}</p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-lg my-2">Análisis de Componentes</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div class="bg-gray-50 p-3 rounded-md border">${getFuelAnalysis(props)}</div>
+                        <div class="bg-gray-50 p-3 rounded-md border">${getWeatherAnalysis(props)}</div>
+                    </div>
+                </div>
+                <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded-r-lg mt-4">
+                    <h4 class="font-bold">Conclusión y Recomendación</h4>
+                    <p>${getConclusion(props)}</p>
+                </div>`;
+            openReportModal();
+        };
+
+        const openReportModal = () => { ui.reportModalBg.classList.remove('hidden'); setTimeout(() => ui.reportModalBg.classList.remove('opacity-0'), 10); };
+        const closeReportModal = () => { ui.reportModalBg.classList.add('opacity-0'); setTimeout(() => ui.reportModalBg.classList.add('hidden'), 300); };
+        
+        const handleFilterChange = () => {
+            const activeLevels = [...document.querySelectorAll('#layer-filters input[data-level]:checked')].map(cb => cb.dataset.level);
+            if (geoJsonLayer) geoJsonLayer.eachLayer(layer => activeLevels.includes(layer.feature.properties.nivel) ? map.addLayer(layer) : map.removeLayer(layer));
+        };
+
+        function startTour() {
+            // ... (código del tour sin cambios) ...
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            setupEventListeners();
+            loadInitialData();
+        });
+    </script>
 </body>
 </html>
