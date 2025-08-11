@@ -160,7 +160,7 @@
                 processCSVData(csvText);
             } catch (error) {
                 console.error("Error al cargar datos:", error);
-                ui.statusMsg.innerHTML = `<span class="text-red-600 font-bold">❌ Error al cargar.</span>`;
+                ui.statusMsg.innerHTML = `<span class="text-red-600 font-bold">❌ Error al cargar.</span> <span class="text-xs">${error.message}</span>`;
             }
         };
         
@@ -186,7 +186,7 @@
                 }
 
             } catch (error) {
-                ui.statusMsg.innerHTML = `<span class="text-red-600 font-bold">❌ ${error.message}</span>`;
+                ui.statusMsg.innerHTML = `<span class="text-red-600 font-bold">❌ Error al procesar datos.</span>  <span class="text-xs">${error.message}</span>`;
             }
         };
 
@@ -246,8 +246,15 @@
 
         const populateTownSelector = (data) => {
             const uniqueTowns = [...new Map(data.map(item => [item.nombre, item])).values()];
-            ui.townSelect.innerHTML = '<option value="">Seleccione...</option>' + uniqueTowns.map(item => `<option value="${item.uniqueId}">${item.nombre}</option>`).sort((a, b) => a.text.localeCompare(b.text)).join('');
-            ui.townSelect.disabled = false; ui.searchBtn.disabled = false;
+            
+            uniqueTowns.sort((a, b) => {
+                if (!a.nombre || !b.nombre) return 0;
+                return a.nombre.localeCompare(b.nombre);
+            });
+
+            ui.townSelect.innerHTML = '<option value="">Seleccione...</option>' + uniqueTowns.map(item => `<option value="${item.uniqueId}">${item.nombre}</option>`).join('');
+            ui.townSelect.disabled = false;
+            ui.searchBtn.disabled = false;
         };
 
         const handleTownSearch = () => {
@@ -301,51 +308,75 @@
         };
         
         const generateReport = (props) => {
-            document.getElementById('report-id').textContent = `${props.uniqueId}`;
-            document.getElementById('report-date').textContent = new Date().toLocaleDateString('es-AR', { dateStyle: 'full' });
+            // **FINAL VERSION**: Replicates the user's screenshot format.
+            document.getElementById('report-id').textContent = `GAR-${btoa(props.uniqueId).substring(0, 10).toUpperCase()}`;
+            document.getElementById('report-date').textContent = new Date().toLocaleString('es-AR', {timeZone: 'America/Argentina/Buenos_Aires'});
+
+            const p = {
+                ndvi: parseFloat(props.ndvi),
+                precip: parseFloat(props.precipitacion_30d_sat),
+                temp: parseFloat(props.temperatura_sat),
+                wind: parseFloat(props.viento_kmh_sat)
+            };
+
+            // --- Helper functions for qualitative descriptions ---
+            const getNdivDescription = (val) => (val < 0.4) ? "bajo, indicando estrés hídrico" : "moderado";
+            const getPrecipDescription = (val) => (val < 30) ? "muy escasa" : (val < 60 ? "escasa" : "suficiente");
+            const getTempDescription = (val) => (val > 25) ? "alta" : (val < 10 ? "baja" : "moderada");
+            const getWindDescription = (val) => (val > 20) ? "fuerte" : (val < 5 ? "calmo" : "moderado");
+
+            // --- Dynamic text generation based on risk level ---
+            let executiveSummary, recommendation;
+            switch(props.nivel) {
+                case 'CRÍTICO':
+                    executiveSummary = `El nivel de riesgo es <strong>CRÍTICO (${parseFloat(props.riesgo_final).toFixed(1)}%)</strong>. La combinación de combustible extremadamente seco y condiciones meteorológicas adversas crea un escenario de peligro inminente.`;
+                    recommendation = `Se recomienda <strong>alerta máxima</strong> y pre-posición de recursos en zonas de interfaz.`;
+                    break;
+                case 'ALTO':
+                    executiveSummary = `El nivel de riesgo es <strong>ALTO (${parseFloat(props.riesgo_final).toFixed(1)}%)</strong>. Múltiples factores indican una alta probabilidad de ignición y propagación rápida del fuego.`;
+                    recommendation = `Se recomienda <strong>vigilancia intensificada</strong> y mantener los recursos en alerta.`;
+                    break;
+                case 'MODERADO':
+                    executiveSummary = `El nivel de riesgo es <strong>MODERADO (${parseFloat(props.riesgo_final).toFixed(1)}%)</strong>. Existen condiciones que podrían facilitar el inicio de incendios si no se toman precauciones.`;
+                    recommendation = `Se recomienda <strong>monitoreo activo</strong> de las condiciones y mantener precaución.`;
+                    break;
+                default: // BAJO
+                    executiveSummary = `El nivel de riesgo es <strong>BAJO (${parseFloat(props.riesgo_final).toFixed(1)}%)</strong>. Las condiciones actuales de humedad en el combustible mitigan significativamente el peligro.`;
+                    recommendation = `Mantener las tareas de prevención habituales. No se requiere acción inmediata.`;
+            }
             
             const content = `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                    <div class="bg-gray-50 p-3 rounded-lg border">
-                        <h4 class="font-bold text-md text-gray-800 border-b pb-1 mb-2">📍 Identificación del Punto</h4>
-                        <p><strong>Ubicación:</strong> ${props.nombre}</p>
-                        <p><strong>Coordenadas:</strong> ${parseFloat(props.lat).toFixed(4)}, ${parseFloat(props.lon).toFixed(4)}</p>
-                        <p><strong>Tipo de Zona:</strong> ${props.zona_tipo.replace('_', ' ')}</p>
+                <div class="space-y-4 text-gray-700">
+                    <h3 class="text-lg font-bold text-center text-gray-800">Reporte para: ${props.nombre.toUpperCase()}</h3>
+                    
+                    <div>
+                        <h4 class="font-semibold text-md text-gray-800 border-b pb-1 mb-2">Resumen Ejecutivo</h4>
+                        <p class="text-sm">${executiveSummary}</p>
                     </div>
-                    <div class="bg-gray-50 p-3 rounded-lg border">
-                        <h4 class="font-bold text-md text-gray-800 border-b pb-1 mb-2">🚨 Evaluación de Riesgo</h4>
-                        <p><strong>Nivel de Riesgo:</strong> <span class="font-bold ${
-                            {'CRÍTICO':'text-red-600', 'ALTO':'text-orange-500', 'MODERADO':'text-yellow-600', 'BAJO':'text-green-600'}[props.nivel] || 'text-gray-500'
-                        }">${props.nivel}</span></p>
-                        <p><strong>Índice Final:</strong> ${parseFloat(props.riesgo_final).toFixed(1)}%</p>
-                        <p><strong>Población Afectada:</strong> ${props.poblacion} personas</p>
-                    </div>
-                    <div class="md:col-span-2 bg-gray-50 p-3 rounded-lg border">
-                        <h4 class="font-bold text-md text-gray-800 border-b pb-1 mb-2">🛰️ Parámetros Satelitales (Factores)</h4>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
-                            <p><strong>NDVI (Vegetación):</strong> ${parseFloat(props.ndvi).toFixed(3)}</p>
-                            <p><strong>NDWI (Humedad):</strong> ${parseFloat(props.ndwi).toFixed(3)}</p>
-                            <p><strong>NBR (Combustible):</strong> ${parseFloat(props.nbr).toFixed(3)}</p>
-                            <p><strong>Temp. Superficie:</strong> ${parseFloat(props.temperatura_sat).toFixed(1)} °C</p>
-                            <p><strong>Elevación:</strong> ${props.elevacion_msnm} msnm</p>
-                            <p><strong>Pendiente:</strong> ${parseFloat(props.pendiente_grados).toFixed(1)}°</p>
-                            <p><strong>Precip. (30d):</strong> ${parseFloat(props.precipitacion_30d_sat).toFixed(1)} mm</p>
-                            <p><strong>Viento Satelital:</strong> ${parseFloat(props.viento_kmh_sat).toFixed(1)} km/h</p>
+                    
+                    <div>
+                        <h4 class="font-semibold text-md text-gray-800 border-b pb-1 mb-2">Análisis de Componentes</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div class="bg-gray-50 p-3 rounded-lg border">
+                                <p class="font-bold mb-1">1. Condición del Combustible</p>
+                                <p><strong>NDVI:</strong> ${p.ndvi.toFixed(3)}, ${getNdivDescription(p.ndvi)}.</p>
+                                <p><strong>Precipitación 30d (Sat):</strong> ${p.precip.toFixed(1)} mm, ${getPrecipDescription(p.precip)}.</p>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded-lg border">
+                                <p class="font-bold mb-1">2. Peligro Meteorológico</p>
+                                <p><strong>Temperatura (Sat):</strong> ${p.temp.toFixed(1)}°C, ${getTempDescription(p.temp)}.</p>
+                                <p><strong>Viento (Sat):</strong> ${p.wind.toFixed(1)} km/h, ${getWindDescription(p.wind)}.</p>
+                            </div>
                         </div>
                     </div>
-                    <div class="md:col-span-2 bg-gray-50 p-3 rounded-lg border">
-                        <h4 class="font-bold text-md text-gray-800 border-b pb-1 mb-2">🌍 Datos de Campo (Referencia)</h4>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
-                            <p><strong>Precip. Real (30d):</strong> ${props.precipitacion_30d_real || 'No disponible'}</p>
-                            <p><strong>Temp. Real (Día):</strong> ${props.temperatura_dia_real || 'No disponible'}</p>
-                            <p><strong>Viento Real (Día):</strong> ${props.viento_dia_real || 'No disponible'}</p>
-                        </div>
+
+                    <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-800 p-3 rounded-r-lg">
+                        <h4 class="font-bold text-md mb-1">Conclusión y Recomendación</h4>
+                        <p class="text-sm">${recommendation}</p>
                     </div>
-                </div>
-                <div class="mt-4 text-xs text-gray-500">
-                    <p><strong>Análisis:</strong> Este reporte se genera automáticamente integrando múltiples variables. Los "Parámetros Satelitales" son los factores primarios utilizados en el modelo predictivo. Los "Datos de Campo" son valores de referencia para validación y pueden no estar disponibles para todos los puntos.</p>
                 </div>
             `;
+
             ui.reportContent.innerHTML = content;
             openReportModal();
         };
