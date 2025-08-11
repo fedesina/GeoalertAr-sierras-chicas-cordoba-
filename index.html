@@ -30,8 +30,8 @@
         #mobile-menu-btn { z-index: 1001; }
         #sidebar-overlay { z-index: 1999; }
         #sidebar { z-index: 2000; }
-        .leaflet-popup-pane { z-index: 4000 !important; } /* Popups must be above the sidebar */
-        #report-modal-bg { z-index: 5000 !important; } /* Report modal must be above popups */
+        .leaflet-popup-pane { z-index: 4000 !important; }
+        #report-modal-bg { z-index: 5000 !important; }
         /* --- END OF FIX --- */
 
         #report-modal-content { transition: transform 0.3s ease; }
@@ -45,7 +45,7 @@
         
         #report-content { position: relative; }
 
-        .shepherd-element { box-shadow: 0 5px 15px rgba(0,0,0,.2); border-radius: 8px; max-width: 350px; }
+        .shepherd-element { z-index: 9999 !important; box-shadow: 0 5px 15px rgba(0,0,0,.2); border-radius: 8px; max-width: 350px; }
         .shepherd-header { background-color: #3b82f6; padding: 1rem; }
         .shepherd-title { color: white; font-weight: bold; }
         .shepherd-cancel-icon { color: white; opacity: 0.75; }
