@@ -93,7 +93,7 @@
             <div id="stats-summary"></div><div id="layer-filters"></div>
         </div>
         
-        <div class="p-3 border-t border-gray-200 text-xs text-gray-500"><p>🇦🇷 Sistema GeoAlertAR® Argentina</p><p>© 2025 Desarollador: Federico Nicolás Sinato</p></div>
+        <div class="p-3 border-t border-gray-200 text-xs text-gray-500"><p>🇦🇷 Sistema FireWatch Argentina</p><p>© 2025 Federico Nicolás Sinato</p></div>
     </aside>
 
     <main class="flex-1 h-full"><div id="map" class="h-full w-full bg-gray-200"></div></main>
@@ -104,7 +104,7 @@
             <div class="flex justify-between items-center p-4 border-b"><h2 class="text-xl font-bold text-gray-800">📄 Reporte de Inteligencia de Riesgo</h2><button id="close-report-btn" class="text-gray-400 hover:text-gray-600 text-3xl">&times;</button></div>
             
             <div class="bg-red-50 border-l-4 border-red-500 p-3 mx-4 mt-4 rounded-r">
-                <p class="text-xs text-red-800"><strong>⚠️ CONFIDENCIAL:</strong> Propiedad de GeoAlertAR®. Prohibida su distribución.</p>
+                <p class="text-xs text-red-800"><strong>⚠️ CONFIDENCIAL:</strong> Propiedad de GeoAlertAR. Prohibida su distribución.</p>
             </div>
             
             <div class="bg-blue-50 border-l-4 border-blue-500 p-3 mx-4 mt-2 rounded-r">
@@ -151,14 +151,31 @@
             ui.closeSidebar?.addEventListener('click', closeMobileMenu);
             ui.sidebarOverlay?.addEventListener('click', closeMobileMenu);
             ui.searchBtn.addEventListener('click', handleTownSearch);
-            ui.closeReportBtn.addEventListener('click', closeReportModal);
-            ui.reportModalBg.addEventListener('click', (e) => { if (e.target === ui.reportModalBg) closeReportModal(); });
+            
+            // FIX DEL MODAL APLICADO
+            ui.closeReportBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                closeReportModal();
+            });
+            ui.reportModalBg.addEventListener('click', (e) => { 
+                if (e.target === ui.reportModalBg) {
+                    e.preventDefault();
+                    closeReportModal();
+                }
+            });
+            // Cerrar con ESC
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !ui.reportModalBg.classList.contains('hidden')) {
+                    closeReportModal();
+                }
+            });
         };
 
         const loadInitialData = async () => {
             ui.statusMsg.textContent = 'Cargando datos...';
             try {
-                const response = await fetch('data.csv');
+                const response = await fetch('data');
                 if (!response.ok) throw new Error(`Error de red: ${response.status}`);
                 const csvText = await response.text();
                 if (!csvText) throw new Error("Archivo de datos vacío.");
@@ -377,8 +394,31 @@
             openReportModal();
         };
 
-        const openReportModal = () => { ui.reportModalBg.classList.remove('hidden'); setTimeout(() => ui.reportModalBg.classList.remove('opacity-0'), 10); };
-        const closeReportModal = () => { ui.reportModalBg.classList.add('opacity-0'); setTimeout(() => ui.reportModalBg.classList.add('hidden'), 300); };
+        // FUNCIONES DEL MODAL ARREGLADAS
+        const openReportModal = () => { 
+            ui.reportModalBg.classList.remove('hidden'); 
+            ui.reportModalBg.style.pointerEvents = 'auto';
+            document.body.style.overflow = 'hidden';
+            setTimeout(() => {
+                ui.reportModalBg.classList.remove('opacity-0');
+                ui.reportModalBg.classList.add('opacity-100');
+                document.getElementById('report-modal-content').classList.remove('scale-95');
+                document.getElementById('report-modal-content').classList.add('scale-100');
+            }, 10); 
+        };
+        
+        const closeReportModal = () => { 
+            ui.reportModalBg.classList.remove('opacity-100');
+            ui.reportModalBg.classList.add('opacity-0');
+            document.getElementById('report-modal-content').classList.remove('scale-100');
+            document.getElementById('report-modal-content').classList.add('scale-95');
+            setTimeout(() => {
+                ui.reportModalBg.classList.add('hidden');
+                ui.reportModalBg.style.pointerEvents = 'none';
+                document.body.style.overflow = 'auto';
+                ui.reportContent.innerHTML = '';
+            }, 300); 
+        };
         
         const handleFilterChange = () => {
             const activeLevels = [...document.querySelectorAll('#layer-filters input[data-level]:checked')].map(cb => cb.dataset.level);
