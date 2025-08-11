@@ -26,11 +26,14 @@
         .leaflet-popup-content-wrapper { border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
         .leaflet-popup-tip { background: #ffffff; }
 
+        /* --- THE DEFINITIVE Z-INDEX FIX --- */
         #mobile-menu-btn { z-index: 1001; }
-        #sidebar-overlay { z-index: 1999; transition: opacity 0.3s ease; }
+        #sidebar-overlay { z-index: 1999; }
         #sidebar { z-index: 2000; }
-        /* Inspired by firewatch_mapa.html: Use a very high z-index for the modal to ensure it's on top of everything */
-        #report-modal-bg { z-index: 7000; transition: opacity 0.3s ease; }
+        .leaflet-popup-pane { z-index: 4000 !important; } /* Popups must be above the sidebar */
+        #report-modal-bg { z-index: 5000 !important; } /* Report modal must be above popups */
+        /* --- END OF FIX --- */
+
         #report-modal-content { transition: transform 0.3s ease; }
 
         @media (max-width: 768px) {
@@ -142,10 +145,6 @@
             map = L.map('map', { center: [-31.07, -64.30], zoom: window.innerWidth < 768 ? 10 : 11, layers: [hybridLayer], zoomControl: window.innerWidth > 768 });
             const baseMaps = { "Híbrido": hybridLayer, "Satélite": satelliteLayer };
             L.control.layers(baseMaps).addTo(map);
-
-            // --- THE DEFINITIVE FIX FOR THE Z-INDEX WAR ---
-            // This ensures all map popups open in a layer that is on top of all other UI elements, preventing freezes.
-            map.getPane('popupPane').style.zIndex = 6000;
         };
 
         const setupEventListeners = () => {
