@@ -38,6 +38,9 @@
         }
         
         .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 4rem; color: rgba(59, 130, 246, 0.1); font-weight: bold; pointer-events: none; z-index: 1; }
+        
+        /* THE FIX: Removed z-index: 10 from report-content to prevent it from overlapping the close button */
+        #report-content { position: relative; }
 
         .shepherd-element { box-shadow: 0 5px 15px rgba(0,0,0,.2); border-radius: 8px; max-width: 350px; }
         .shepherd-header { background-color: #3b82f6; padding: 1rem; }
@@ -94,7 +97,7 @@
     <main class="flex-1 h-full"><div id="map" class="h-full w-full bg-gray-200"></div></main>
     
     <div id="report-modal-bg" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden opacity-0">
-        <div id="report-modal-content" class="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col transform scale-95 relative">
+        <div id="report-modal-content" class="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col transform scale-95">
             <div class="watermark">GEOALERTAR</div>
             <div class="flex justify-between items-center p-4 border-b"><h2 class="text-xl font-bold text-gray-800">📄 Reporte de Inteligencia de Riesgo</h2><button id="close-report-btn" class="text-gray-400 hover:text-gray-600 text-3xl">&times;</button></div>
             
@@ -106,7 +109,7 @@
                 <p class="text-xs text-blue-800"><strong>ℹ️ Validez Predictiva:</strong> El análisis de riesgo es una proyección con vigencia para los próximos 7 días.</p>
             </div>
 
-            <div id="report-content" class="p-6 overflow-y-auto text-gray-700 space-y-4 relative z-10"></div>
+            <div id="report-content" class="p-6 overflow-y-auto text-gray-700 space-y-4"></div>
             <div class="p-4 border-t bg-gray-50 text-xs text-gray-600"><p class="text-center">Reporte por <strong>GeoAlertAR®</strong> | ID: <span id="report-id"></span> | <span id="report-date"></span></p></div>
         </div>
     </div>
@@ -308,7 +311,6 @@
         };
         
         const generateReport = (props) => {
-            // **FINAL VERSION**: Replicates the user's screenshot format.
             document.getElementById('report-id').textContent = `GAR-${btoa(props.uniqueId).substring(0, 10).toUpperCase()}`;
             document.getElementById('report-date').textContent = new Date().toLocaleString('es-AR', {timeZone: 'America/Argentina/Buenos_Aires'});
 
@@ -319,13 +321,11 @@
                 wind: parseFloat(props.viento_kmh_sat)
             };
 
-            // --- Helper functions for qualitative descriptions ---
             const getNdivDescription = (val) => (val < 0.4) ? "bajo, indicando estrés hídrico" : "moderado";
             const getPrecipDescription = (val) => (val < 30) ? "muy escasa" : (val < 60 ? "escasa" : "suficiente");
             const getTempDescription = (val) => (val > 25) ? "alta" : (val < 10 ? "baja" : "moderada");
             const getWindDescription = (val) => (val > 20) ? "fuerte" : (val < 5 ? "calmo" : "moderado");
 
-            // --- Dynamic text generation based on risk level ---
             let executiveSummary, recommendation;
             switch(props.nivel) {
                 case 'CRÍTICO':
@@ -340,7 +340,7 @@
                     executiveSummary = `El nivel de riesgo es <strong>MODERADO (${parseFloat(props.riesgo_final).toFixed(1)}%)</strong>. Existen condiciones que podrían facilitar el inicio de incendios si no se toman precauciones.`;
                     recommendation = `Se recomienda <strong>monitoreo activo</strong> de las condiciones y mantener precaución.`;
                     break;
-                default: // BAJO
+                default:
                     executiveSummary = `El nivel de riesgo es <strong>BAJO (${parseFloat(props.riesgo_final).toFixed(1)}%)</strong>. Las condiciones actuales de humedad en el combustible mitigan significativamente el peligro.`;
                     recommendation = `Mantener las tareas de prevención habituales. No se requiere acción inmediata.`;
             }
