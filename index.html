@@ -29,7 +29,8 @@
         #mobile-menu-btn { z-index: 1001; }
         #sidebar-overlay { z-index: 1999; transition: opacity 0.3s ease; }
         #sidebar { z-index: 2000; }
-        #report-modal-bg { z-index: 3000; transition: opacity 0.3s ease; }
+        /* Inspired by firewatch_mapa.html: Use a very high z-index for the modal to ensure it's on top of everything */
+        #report-modal-bg { z-index: 7000; transition: opacity 0.3s ease; }
         #report-modal-content { transition: transform 0.3s ease; }
 
         @media (max-width: 768px) {
@@ -39,7 +40,6 @@
         
         .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 4rem; color: rgba(59, 130, 246, 0.1); font-weight: bold; pointer-events: none; z-index: 1; }
         
-        /* THE FIX: Removed z-index: 10 from report-content to prevent it from overlapping the close button */
         #report-content { position: relative; }
 
         .shepherd-element { box-shadow: 0 5px 15px rgba(0,0,0,.2); border-radius: 8px; max-width: 350px; }
@@ -142,6 +142,10 @@
             map = L.map('map', { center: [-31.07, -64.30], zoom: window.innerWidth < 768 ? 10 : 11, layers: [hybridLayer], zoomControl: window.innerWidth > 768 });
             const baseMaps = { "Híbrido": hybridLayer, "Satélite": satelliteLayer };
             L.control.layers(baseMaps).addTo(map);
+
+            // --- THE DEFINITIVE FIX FOR THE Z-INDEX WAR ---
+            // This ensures all map popups open in a layer that is on top of all other UI elements, preventing freezes.
+            map.getPane('popupPane').style.zIndex = 6000;
         };
 
         const setupEventListeners = () => {
