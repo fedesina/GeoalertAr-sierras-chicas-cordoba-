@@ -175,7 +175,7 @@
         const loadInitialData = async () => {
             ui.statusMsg.textContent = 'Cargando datos...';
             try {
-                const response = await fetch('data');
+                const response = await fetch('data/data.csv');
                 if (!response.ok) throw new Error(`Error de red: ${response.status}`);
                 const csvText = await response.text();
                 if (!csvText) throw new Error("Archivo de datos vacío.");
