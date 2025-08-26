@@ -5,20 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GeoAlertAR - Sistema de Detección de Incendios | Sierras Chicas Demo</title>
     
-    <!-- Meta tags -->
     <meta name="description" content="Sistema de detección temprana de incendios - Sierras Chicas, Córdoba">
     <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
     
-    <!-- Librerías -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <!-- NUEVO: Librería para el Tour Guiado (Shepherd.js) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/css/shepherd.css"/>
     <script src="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/js/shepherd.min.js"></script>
 
-    <!-- Estilos Personalizados -->
     <style>
         body { font-family: 'Inter', sans-serif; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
@@ -152,7 +148,6 @@
             ui.sidebarOverlay?.addEventListener('click', closeMobileMenu);
             ui.searchBtn.addEventListener('click', handleTownSearch);
             
-            // FIX DEL MODAL APLICADO
             ui.closeReportBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -164,7 +159,6 @@
                     closeReportModal();
                 }
             });
-            // Cerrar con ESC
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && !ui.reportModalBg.classList.contains('hidden')) {
                     closeReportModal();
@@ -175,6 +169,7 @@
         const loadInitialData = async () => {
             ui.statusMsg.textContent = 'Cargando datos...';
             try {
+                // AQUÍ APUNTAS AL ARCHIVO CSV CORRECTO
                 const response = await fetch('data.csv');
                 if (!response.ok) throw new Error(`Error de red: ${response.status}`);
                 const csvText = await response.text();
@@ -203,9 +198,8 @@
                 ui.resultsPanel.classList.remove('hidden');
                 ui.searchPanel.classList.remove('hidden');
                 
-                // Iniciar el tour solo si no se ha completado antes
                 if (!localStorage.getItem('geoalertar_tour_completed')) {
-                    setTimeout(startTour, 1000); // Pequeña demora para que el mapa se renderice
+                    setTimeout(startTour, 1000);
                 }
 
             } catch (error) {
@@ -213,15 +207,42 @@
             }
         };
 
+        // =============================================================================
+        // == FUNCIÓN CORREGIDA PARA SOLUCIONAR EL ERROR DE NÚMEROS GIGANTES ==
+        // =============================================================================
         const parseCSV = (text) => {
             const lines = text.trim().split(/\r?\n/);
+            if (lines.length < 2) return [];
+
             const headers = lines.shift().split(',').map(h => h.trim());
+            
+            // Lista de todas las columnas que deben ser tratadas como números
+            const numericHeaders = [
+                'lat', 'lon', 'riesgo_final', 'poblacion', 'ndvi', 'ndwi', 'nbr', 
+                'temperatura', 'elevacion_msnm', 'pendiente_grados', 'precipitacion_60d', 'viento_kmh'
+            ];
+
             return lines.map(line => {
                 if (!line) return null;
                 const values = line.split(',');
-                return headers.reduce((obj, h, i) => (obj[h] = values[i]?.trim() || '', obj), {});
-            }).filter(Boolean);
+                if (values.length !== headers.length) return null;
+
+                const rowObject = headers.reduce((obj, header, i) => {
+                    const value = values[i]?.trim() || '';
+                    
+                    // Si la columna es numérica y tiene un valor, la convertimos a un número (float)
+                    if (numericHeaders.includes(header) && value !== '') {
+                        obj[header] = parseFloat(value);
+                    } else {
+                        obj[header] = value; // De lo contrario, la dejamos como texto
+                    }
+                    return obj;
+                }, {});
+                return rowObject;
+
+            }).filter(Boolean); // Eliminar filas nulas o con errores
         };
+        // =============================================================================
 
         const convertToGeoJSON = (data) => ({
             type: "FeatureCollection",
@@ -268,7 +289,8 @@
         };
 
         const populateTownSelector = (data) => {
-            ui.townSelect.innerHTML = '<option value="">Seleccione...</option>' + data.map(item => `<option value="${item.uniqueId}">${item.nombre}</option>`).sort((a, b) => a.localeCompare(b)).join('');
+            const uniqueTowns = [...new Map(data.map(item => [item['nombre'], item])).values()];
+            ui.townSelect.innerHTML = '<option value="">Seleccione...</option>' + uniqueTowns.map(item => `<option value="${item.uniqueId}">${item.nombre}</option>`).sort((a, b) => a.localeCompare(b)).join('');
             ui.townSelect.disabled = false; ui.searchBtn.disabled = false;
         };
 
@@ -394,7 +416,6 @@
             openReportModal();
         };
 
-        // FUNCIONES DEL MODAL ARREGLADAS
         const openReportModal = () => { 
             ui.reportModalBg.classList.remove('hidden'); 
             ui.reportModalBg.style.pointerEvents = 'auto';
@@ -425,9 +446,6 @@
             if (geoJsonLayer) geoJsonLayer.eachLayer(layer => activeLevels.includes(layer.feature.properties.nivel) ? map.addLayer(layer) : map.removeLayer(layer));
         };
 
-        // =================================================================================
-        // == INICIO DE LA LÓGICA DEL TOUR GUIADO ==
-        // =================================================================================
         function startTour() {
             const tour = new Shepherd.Tour({
                 useModalOverlay: true,
@@ -501,9 +519,6 @@
 
             tour.start();
         }
-        // =================================================================================
-        // == FIN DE LA LÓGICA DEL TOUR GUIADO ==
-        // =================================================================================
 
         document.addEventListener('DOMContentLoaded', () => {
             initMap();
