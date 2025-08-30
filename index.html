@@ -5,20 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GeoAlertAR - Sistema de Detección de Incendios | Sierras Chicas Demo</title>
     
-    <!-- Meta tags -->
     <meta name="description" content="Sistema de detección temprana de incendios - Sierras Chicas, Córdoba">
     <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
     
-    <!-- Librerías -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <!-- NUEVO: Librería para el Tour Guiado (Shepherd.js) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/css/shepherd.css"/>
     <script src="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/js/shepherd.min.js"></script>
 
-    <!-- Estilos Personalizados -->
     <style>
         body { font-family: 'Inter', sans-serif; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
@@ -152,7 +148,6 @@
             ui.sidebarOverlay?.addEventListener('click', closeMobileMenu);
             ui.searchBtn.addEventListener('click', handleTownSearch);
             
-            // FIX DEL MODAL APLICADO
             ui.closeReportBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -164,7 +159,6 @@
                     closeReportModal();
                 }
             });
-            // Cerrar con ESC
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && !ui.reportModalBg.classList.contains('hidden')) {
                     closeReportModal();
@@ -203,9 +197,8 @@
                 ui.resultsPanel.classList.remove('hidden');
                 ui.searchPanel.classList.remove('hidden');
                 
-                // Iniciar el tour solo si no se ha completado antes
                 if (!localStorage.getItem('geoalertar_tour_completed')) {
-                    setTimeout(startTour, 1000); // Pequeña demora para que el mapa se renderice
+                    setTimeout(startTour, 1000);
                 }
 
             } catch (error) {
@@ -215,11 +208,29 @@
 
         const parseCSV = (text) => {
             const lines = text.trim().split(/\r?\n/);
+            if (lines.length < 2) return [];
+
             const headers = lines.shift().split(',').map(h => h.trim());
+            const numericHeaders = [
+                'lat', 'lon', 'riesgo_final', 'poblacion', 'ndvi', 'ndwi', 'nbr', 
+                'temperatura', 'elevacion_msnm', 'pendiente_grados', 'precipitacion_60d', 'viento_kmh'
+            ];
+
             return lines.map(line => {
                 if (!line) return null;
                 const values = line.split(',');
-                return headers.reduce((obj, h, i) => (obj[h] = values[i]?.trim() || '', obj), {});
+                if (values.length !== headers.length) return null;
+
+                const rowObject = headers.reduce((obj, header, i) => {
+                    const value = values[i]?.trim() || '';
+                    if (numericHeaders.includes(header) && value !== '') {
+                        obj[header] = parseFloat(value);
+                    } else {
+                        obj[header] = value;
+                    }
+                    return obj;
+                }, {});
+                return rowObject;
             }).filter(Boolean);
         };
 
@@ -268,7 +279,8 @@
         };
 
         const populateTownSelector = (data) => {
-            ui.townSelect.innerHTML = '<option value="">Seleccione...</option>' + data.map(item => `<option value="${item.uniqueId}">${item.nombre}</option>`).sort((a, b) => a.localeCompare(b)).join('');
+            const uniqueTowns = [...new Map(data.map(item => [item['nombre'], item])).values()];
+            ui.townSelect.innerHTML = '<option value="">Seleccione...</option>' + uniqueTowns.map(item => `<option value="${item.uniqueId}">${item.nombre}</option>`).sort((a, b) => a.localeCompare(b)).join('');
             ui.townSelect.disabled = false; ui.searchBtn.disabled = false;
         };
 
@@ -309,10 +321,10 @@
 
             const datosCrudosHTML = `<hr class="my-2 border-gray-200">
             <div class="text-xs text-gray-500">
-                <p><strong>NDVI:</strong> ${props.ndvi || 'N/A'}</p>
-                <p><strong>Precip (60d):</strong> ${props.precipitacion_60d || 'N/A'} mm</p>
-                <p><strong>Temp:</strong> ${props.temperatura || 'N/A'} °C</p>
-                <p><strong>Viento:</strong> ${props.viento_kmh || 'N/A'} km/h</p>
+                <p><strong>NDVI:</strong> ${props.ndvi ? props.ndvi.toFixed(3) : 'N/A'}</p>
+                <p><strong>Precip (60d):</strong> ${props.precipitacion_60d ? props.precipitacion_60d.toFixed(1) : 'N/A'} mm</p>
+                <p><strong>Temp:</strong> ${props.temperatura ? props.temperatura.toFixed(1) : 'N/A'} °C</p>
+                <p><strong>Viento:</strong> ${props.viento_kmh ? props.viento_kmh.toFixed(1) : 'N/A'} km/h</p>
             </div>`;
 
             return `<div class="text-gray-800" style="min-width: 230px;">
@@ -327,6 +339,9 @@
                     </div>`;
         };
         
+        // =============================================================================
+        // == FUNCIÓN CORREGIDA PARA SOLUCIONAR EL ERROR DE NÚMEROS EN EL REPORTE ==
+        // =============================================================================
         const generateReport = (props) => {
             const id = 'GAR-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substr(2, 5).toUpperCase();
             const date = new Date().toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
@@ -335,7 +350,7 @@
 
             const getExecutiveSummary = (p) => {
                 const nivel = p.nivel?.toUpperCase();
-                const riesgo = p.riesgo_final ? `(${parseFloat(p.riesgo_final).toFixed(1)}%)` : '';
+                const riesgo = p.riesgo_final ? parseFloat(p.riesgo_final).toFixed(1) : 'N/A';
                 const summaries = {
                     'CRÍTICO': `El nivel de riesgo es <strong>CRÍTICO ${riesgo}</strong>. La combinación de combustible extremadamente seco y condiciones meteorológicas adversas crea un escenario de peligro inminente, con alto potencial de ignición y propagación explosiva.`,
                     'ALTO': `El nivel de riesgo es <strong>ALTO ${riesgo}</strong>. El combustible vegetal se encuentra en una condición muy seca y propensa a la ignición. Aunque las condiciones meteorológicas no son extremas, cualquier foco podría propagarse con rapidez.`,
@@ -346,19 +361,23 @@
             };
 
             const getFuelAnalysis = (p) => {
-                const ndvi = parseFloat(p.ndvi);
-                const precip = parseFloat(p.precipitacion_60d);
+                const ndvi = p.ndvi ? parseFloat(p.ndvi) : NaN;
+                const precip = p.precipitacion_60d ? parseFloat(p.precipitacion_60d) : NaN;
+                
                 const ndvi_desc = isNaN(ndvi) ? "dato no disponible" : ndvi < 0.3 ? "extremadamente bajo, indicando vegetación muy seca y estresada." : ndvi < 0.5 ? "bajo, indicando estrés hídrico y combustible seco." : "saludable, indicando buena humedad en la vegetación.";
                 const precip_desc = isNaN(precip) ? "dato no disponible" : precip < 10 ? "casi nula, lo que resulta en una sequía profunda del suelo y combustible muerto." : precip < 50 ? "muy escasa, contribuyendo a la sequedad general del combustible." : "suficiente para mantener niveles de humedad seguros.";
-                return `<h5 class="font-bold mb-1 text-gray-700">1. Condición del Combustible</h5><p>El índice de vegetación (NDVI) es de <strong>${p.ndvi}</strong>, un valor ${ndvi_desc}</p><p>La precipitación en los últimos 60 días ha sido de <strong>${p.precipitacion_60d} mm</strong>, una cantidad ${precip_desc}</p>`;
+                
+                return `<h5 class="font-bold mb-1 text-gray-700">1. Condición del Combustible</h5><p>El índice de vegetación (NDVI) es de <strong>${!isNaN(ndvi) ? ndvi.toFixed(3) : 'N/A'}</strong>, un valor ${ndvi_desc}</p><p>La precipitación en los últimos 60 días ha sido de <strong>${!isNaN(precip) ? precip.toFixed(1) : 'N/A'} mm</strong>, una cantidad ${precip_desc}</p>`;
             };
 
             const getWeatherAnalysis = (p) => {
-                const temp = parseFloat(p.temperatura);
-                const viento = parseFloat(p.viento_kmh);
+                const temp = p.temperatura ? parseFloat(p.temperatura) : NaN;
+                const viento = p.viento_kmh ? parseFloat(p.viento_kmh) : NaN;
+
                 const temp_desc = isNaN(temp) ? "dato no disponible" : temp > 30 ? "muy alta, lo que reduce drásticamente la humedad del combustible fino." : temp > 25 ? "elevada, contribuyendo al secado y precalentamiento de la vegetación." : "moderada, sin representar un factor de riesgo principal.";
                 const viento_desc = isNaN(viento) ? "dato no disponible" : viento > 30 ? "extremadamente peligroso, capaz de causar una propagación explosiva e impredecible." : viento > 20 ? "fuerte y actúa como un acelerante significativo del fuego." : "moderado y no es un factor dominante en el riesgo actual.";
-                return `<h5 class="font-bold mb-1 text-gray-700">2. Peligro Meteorológico</h5><p>La temperatura superficial es de <strong>${p.temperatura}°C</strong>, considerada ${temp_desc}</p><p>El viento promedio es de <strong>${p.viento_kmh} km/h</strong>, una velocidad ${viento_desc}</p>`;
+
+                return `<h5 class="font-bold mb-1 text-gray-700">2. Peligro Meteorológico</h5><p>La temperatura superficial es de <strong>${!isNaN(temp) ? temp.toFixed(1) : 'N/A'}°C</strong>, considerada ${temp_desc}</p><p>El viento promedio es de <strong>${!isNaN(viento) ? viento.toFixed(1) : 'N/A'} km/h</strong>, una velocidad ${viento_desc}</p>`;
             };
 
             const getConclusion = (p) => {
@@ -393,8 +412,8 @@
                 </div>`;
             openReportModal();
         };
+        // =============================================================================
 
-        // FUNCIONES DEL MODAL ARREGLADAS
         const openReportModal = () => { 
             ui.reportModalBg.classList.remove('hidden'); 
             ui.reportModalBg.style.pointerEvents = 'auto';
@@ -425,9 +444,6 @@
             if (geoJsonLayer) geoJsonLayer.eachLayer(layer => activeLevels.includes(layer.feature.properties.nivel) ? map.addLayer(layer) : map.removeLayer(layer));
         };
 
-        // =================================================================================
-        // == INICIO DE LA LÓGICA DEL TOUR GUIADO ==
-        // =================================================================================
         function startTour() {
             const tour = new Shepherd.Tour({
                 useModalOverlay: true,
@@ -501,9 +517,6 @@
 
             tour.start();
         }
-        // =================================================================================
-        // == FIN DE LA LÓGICA DEL TOUR GUIADO ==
-        // =================================================================================
 
         document.addEventListener('DOMContentLoaded', () => {
             initMap();
