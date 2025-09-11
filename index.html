@@ -340,7 +340,7 @@
         };
         
         // =============================================================================
-        // == FUNCIÓN CORREGIDA PARA SOLUCIONAR EL ERROR DE NÚMEROS EN EL REPORTE ==
+        // ===== FUNCIONES CORREGIDAS PARA QUE COINCIDAN CON LA CALIBRACIÓN BACKEND =====
         // =============================================================================
         const generateReport = (props) => {
             const id = 'GAR-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substr(2, 5).toUpperCase();
@@ -360,22 +360,43 @@
                 return summaries[nivel] || 'El nivel de riesgo no ha sido determinado. Revise los datos de entrada.';
             };
 
+            // FUNCIÓN CORREGIDA - UMBRALES QUE COINCIDEN CON BACKEND
             const getFuelAnalysis = (p) => {
                 const ndvi = p.ndvi ? parseFloat(p.ndvi) : NaN;
                 const precip = p.precipitacion_60d ? parseFloat(p.precipitacion_60d) : NaN;
                 
-                const ndvi_desc = isNaN(ndvi) ? "dato no disponible" : ndvi < 0.3 ? "extremadamente bajo, indicando vegetación muy seca y estresada." : ndvi < 0.5 ? "bajo, indicando estrés hídrico y combustible seco." : "saludable, indicando buena humedad en la vegetación.";
-                const precip_desc = isNaN(precip) ? "dato no disponible" : precip < 10 ? "casi nula, lo que resulta en una sequía profunda del suelo y combustible muerto." : precip < 50 ? "muy escasa, contribuyendo a la sequedad general del combustible." : "suficiente para mantener niveles de humedad seguros.";
+                // UMBRALES CORREGIDOS - COINCIDEN CON BACKEND (ndvi_critico: 0.30, ndvi_moderado: 0.50)
+                const ndvi_desc = isNaN(ndvi) ? "dato no disponible" : 
+                    ndvi < 0.30 ? "extremadamente bajo, indicando vegetación muy seca y altamente inflamable." : 
+                    ndvi < 0.50 ? "bajo, indicando estrés hídrico severo y combustible seco propenso a ignición." : 
+                    ndvi < 0.65 ? "moderado con tendencia seca, requiere monitoreo debido al potencial de ignición." : 
+                    "relativamente húmedo, pero aún susceptible bajo condiciones meteorológicas adversas.";
+                
+                // UMBRALES DE PRECIPITACIÓN CORREGIDOS (precip_critica: 10, precip_normal: 50)
+                const precip_desc = isNaN(precip) ? "dato no disponible" : 
+                    precip < 10 ? "crítica, creando condiciones de sequía extrema y combustible muerto altamente inflamable." : 
+                    precip < 25 ? "muy escasa, generando estrés hídrico significativo en la vegetación." : 
+                    precip < 50 ? "escasa, contribuyendo a la sequedad general del combustible vegetal." : 
+                    "moderada, proporcionando cierta humedad al combustible pero insuficiente para eliminar el riesgo.";
                 
                 return `<h5 class="font-bold mb-1 text-gray-700">1. Condición del Combustible</h5><p>El índice de vegetación (NDVI) es de <strong>${!isNaN(ndvi) ? ndvi.toFixed(3) : 'N/A'}</strong>, un valor ${ndvi_desc}</p><p>La precipitación en los últimos 60 días ha sido de <strong>${!isNaN(precip) ? precip.toFixed(1) : 'N/A'} mm</strong>, una cantidad ${precip_desc}</p>`;
             };
 
+            // FUNCIÓN CORREGIDA - UMBRALES DE TEMPERATURA Y VIENTO QUE COINCIDEN CON BACKEND
             const getWeatherAnalysis = (p) => {
                 const temp = p.temperatura ? parseFloat(p.temperatura) : NaN;
                 const viento = p.viento_kmh ? parseFloat(p.viento_kmh) : NaN;
 
-                const temp_desc = isNaN(temp) ? "dato no disponible" : temp > 30 ? "muy alta, lo que reduce drásticamente la humedad del combustible fino." : temp > 25 ? "elevada, contribuyendo al secado y precalentamiento de la vegetación." : "moderada, sin representar un factor de riesgo principal.";
-                const viento_desc = isNaN(viento) ? "dato no disponible" : viento > 30 ? "extremadamente peligroso, capaz de causar una propagación explosiva e impredecible." : viento > 20 ? "fuerte y actúa como un acelerante significativo del fuego." : "moderado y no es un factor dominante en el riesgo actual.";
+                // UMBRALES CORREGIDOS (temp_critica: 25, viento_critico: 25)
+                const temp_desc = isNaN(temp) ? "dato no disponible" : 
+                    temp > 25 ? "elevada, contribuyendo significativamente al secado y precalentamiento de la vegetación." : 
+                    temp > 18 ? "moderada, representando un factor de riesgo controlado." : 
+                    "baja, sin representar un factor de riesgo principal en las condiciones actuales.";
+                
+                const viento_desc = isNaN(viento) ? "dato no disponible" : 
+                    viento > 25 ? "peligroso, capaz de acelerar significativamente la propagación del fuego." : 
+                    viento > 18 ? "moderadamente alto y puede actuar como acelerante del fuego." : 
+                    "moderado y no es un factor dominante en el riesgo actual.";
 
                 return `<h5 class="font-bold mb-1 text-gray-700">2. Peligro Meteorológico</h5><p>La temperatura superficial es de <strong>${!isNaN(temp) ? temp.toFixed(1) : 'N/A'}°C</strong>, considerada ${temp_desc}</p><p>El viento promedio es de <strong>${!isNaN(viento) ? viento.toFixed(1) : 'N/A'} km/h</strong>, una velocidad ${viento_desc}</p>`;
             };
@@ -386,9 +407,9 @@
                     'CRÍTICO': `Se recomienda <strong>alerta máxima</strong> y la pre-posición de recursos de respuesta rápida. Evitar cualquier actividad que pueda generar chispas es imperativo.`,
                     'ALTO': `Se recomienda <strong>vigilancia intensiva</strong>. Las patrullas preventivas en zonas de interfaz son cruciales para la detección temprana de cualquier columna de humo.`,
                     'MODERADO': `Mantener el estado de <strong>alerta y monitoreo</strong>. Las condiciones pueden cambiar rápidamente si el viento aumenta o la temperatura sube en los próximos días.`,
-                    'BAJO': `Las condiciones actuales son seguras. Continuar con el monitoreo regular como parte del protocolo estándar.`
+                    'BAJO': `Las condiciones actuales son relativamente seguras. Continuar con el monitoreo regular como parte del protocolo estándar.`
                 };
-                return conclusions[nivel] || 'No se puede generar una recomendación.';
+                return conclusions[nivel] || 'No se puede generar una recomendación precisa con los datos disponibles.';
             };
 
             ui.reportContent.innerHTML = `
